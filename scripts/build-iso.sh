@@ -26,24 +26,13 @@ cp -a "$repo/iso/." "$profile/"
 grep -hv '^\s*#' "$repo/iso/packages.x86_64" "$repo/iso/packages.live" | sed '/^\s*$/d' | sort -u >"$profile/packages.x86_64"
 rm -f "$profile/packages.live"
 
-# config/ is the single source of truth for dotfiles. It lands in /etc/skel.
-skel="$profile/airootfs/etc/skel"
-mkdir -p "$skel/.config"
-for dir in hypr kitty waybar rofi mako mpv tmux bambo fontconfig; do
-  cp -a "$repo/config/$dir" "$skel/.config/"
-done
-cp "$repo/config/starship.toml" "$skel/.config/starship.toml"
-cp "$repo/config/chromium-flags.conf" "$skel/.config/chromium-flags.conf"
-cp "$repo/config/zshrc" "$skel/.zshrc"
-cp "$repo/config/zprofile" "$skel/.zprofile"
-
-# Tools and shared data.
+# Dotfiles, tools and shared data (shared with the arm64 image build).
+# shellcheck source=scripts/lib-assemble.sh
+source "$repo/scripts/lib-assemble.sh"
+bambo_assemble_root "$repo" "$profile/airootfs"
 bin="$profile/airootfs/usr/local/bin"
 share="$profile/airootfs/usr/share/bambo"
-mkdir -p "$bin" "$share/tessera" "$profile/airootfs/usr/share/applications"
-for tool in "$repo"/scripts/bambo-*; do
-  install -m 755 "$tool" "$bin/"
-done
+mkdir -p "$profile/airootfs/usr/share/applications"
 
 # bambo-smoke is test instrumentation (see scripts/smoke-test.sh). It is only
 # built into the ISO when BAMBO_SMOKE=1. Release ISOs do not contain it.
@@ -53,8 +42,6 @@ if [[ ${BAMBO_SMOKE:-0} != 1 ]]; then
     "$profile/airootfs/etc/systemd/system/multi-user.target.wants/bambo-smoke.service"
   sed -i '/bambo-smoke/d' "$profile/profiledef.sh"
 fi
-cp "$repo/themes/tessera/wallpaper.png" "$repo/themes/tessera/logo.svg" "$share/tessera/"
-cp "$repo/iso/packages.x86_64" "$share/packages.x86_64"
 cat >"$profile/airootfs/usr/share/applications/bambo-install.desktop" <<'DESKTOP'
 [Desktop Entry]
 Type=Application

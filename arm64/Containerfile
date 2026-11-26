@@ -1,0 +1,45 @@
+# Builder for the BamboOS arm64 disk image: an Arch Linux ARM userland with
+# pacstrap and the filesystem tools.
+#
+# The bootstrap stage (Alpine's pacman installing Arch Linux ARM with the
+# keyring files pinned by hash) is adapted from omacom/try-omarchy,
+# guest/factory/Containerfile, MIT License, Copyright (c) 2026 Try Omarchy
+# contributors.
+FROM docker.io/alpine:3.21 AS bootstrapper
+
+ARG TARGETARCH
+# Mirrors tried in order before the geo-balanced default, which can hand out a slow one.
+ARG ALARM_MIRRORS="tw ca.us hu"
+RUN test "$TARGETARCH" = arm64
+
+RUN apk add --no-cache bash curl gnupg pacman-makepkg zstd
+
+RUN mkdir -p /etc/pacman.d /usr/share/pacman/keyrings && \
+    printf '[options]\nHoldPkg = pacman glibc\nArchitecture = aarch64\nDisableDownloadTimeout\nSigLevel = Required DatabaseOptional\nLocalFileSigLevel = Optional\n\n[core]\nInclude = /etc/pacman.d/mirrorlist\n\n[extra]\nInclude = /etc/pacman.d/mirrorlist\n\n[alarm]\nInclude = /etc/pacman.d/mirrorlist\n\n[aur]\nInclude = /etc/pacman.d/mirrorlist\n' > /etc/pacman.conf && \
+    printf 'Server = http://%s.mirror.archlinuxarm.org/$arch/$repo\n' ${ALARM_MIRRORS} > /etc/pacman.d/mirrorlist && \
+    printf 'Server = http://mirror.archlinuxarm.org/$arch/$repo\n' >> /etc/pacman.d/mirrorlist && \
+    for pair in \
+      'archlinuxarm-revoked e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855' \
+      'archlinuxarm-trusted f2a7250f2a2b77542f82f4219b2bae7895f27b3dcfdf350b497e2be306af776d' \
+      'archlinuxarm.gpg 6ce771e853f04a38a5b533cb33e61f877b9b06b58b6db051eb8a15d737a2332f'; do \
+      set -- $pair; \
+      curl -fsSL "https://raw.githubusercontent.com/archlinuxarm/PKGBUILDs/0b5418fc3f62860b191cd872cb2f933f9fc77841/core/archlinuxarm-keyring/$1" -o "/usr/share/pacman/keyrings/$1"; \
+      echo "$2  /usr/share/pacman/keyrings/$1" | sha256sum -c -; \
+    done && \
+    pacman-key --init && pacman-key --populate archlinuxarm && \
+    mkdir -m 0755 -p /rootfs/var/cache/pacman/pkg /rootfs/var/lib/pacman /rootfs/var/log /rootfs/dev /rootfs/run /rootfs/etc && \
+    mkdir -m 1777 -p /rootfs/tmp && mkdir -m 0555 -p /rootfs/sys /rootfs/proc && \
+    pacman -r /rootfs -Sy --noconfirm base archlinuxarm-keyring && \
+    cp /etc/pacman.conf /rootfs/etc/pacman.conf && \
+    cp /etc/pacman.d/mirrorlist /rootfs/etc/pacman.d/mirrorlist
+
+FROM scratch AS builder
+COPY --from=bootstrapper /rootfs/ /
+
+RUN pacman-key --init && pacman-key --populate archlinuxarm && \
+    pacman -Syu --noconfirm && \
+    pacman -S --needed --noconfirm arch-install-scripts dosfstools e2fsprogs \
+      util-linux jq qemu-img zstd && \
+    pacman -Scc --noconfirm
+
+WORKDIR /src

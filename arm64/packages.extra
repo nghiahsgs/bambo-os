@@ -1,0 +1,3 @@
+# Packages only the arm64 image gets.
+linux-aarch64
+archlinuxarm-keyring

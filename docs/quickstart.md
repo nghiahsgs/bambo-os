@@ -44,22 +44,35 @@ make test-vm
 
 This attaches a 32 GB virtual disk, so you can also test `bambo-install`.
 
-macOS, full screen from the start:
+### Apple Silicon Mac: the arm64 image (fast)
+
+An Apple Silicon Mac cannot run the x86 ISO at a usable speed. Build the arm64 image instead. It runs at native CPU speed through Apple's Hypervisor framework and reaches the desktop in about 10 seconds.
 
 ```bash
 brew install qemu
 ```
 
 ```bash
+make arm64
+```
+
+```bash
 make try
 ```
 
-`scripts/try-bambo.sh` gives the guest one mode with the shape of your main display (1512x982 on a 14 inch MacBook Pro) and QEMU stretches it over the whole screen. Settings: `BAMBO_RES=1280x800`, `BAMBO_WINDOWED=1`, `BAMBO_MEM`, `BAMBO_CPUS`.
-
-- Apple Silicon runs this x86 ISO under emulation. It is slow: about 9 minutes to the desktop on an M5. An Intel Mac uses the hypervisor and is fast.
+- `make arm64` needs Docker. It builds `out/bambo-os-<date>-aarch64.qcow2` (about 1.5 GB) from the Arch Linux ARM repositories with the same package list and dotfiles as the ISO.
+- The image is an installed system, not a live medium. User `bambo`, empty password, `sudo` without a prompt. There is no `bambo-install` in it.
+- `make try` opens it full screen. The guest gets one mode with the shape of your main display (1512x982 on a 14 inch MacBook Pro) and QEMU stretches it over the screen. Settings: `BAMBO_RES=1280x800`, `BAMBO_WINDOWED=1`, `BAMBO_MEM`, `BAMBO_CPUS`.
+- Your changes live in `out/try-arm64.qcow2`. Delete it to start clean. Rebuilding the image also resets it.
+- Graphics are software-rendered. Stock QEMU on macOS has no GPU acceleration for Linux guests.
 - Command is `Super` inside the VM.
 - macOS keeps `Cmd + Space` and `Cmd + Tab` for itself unless the app that starts QEMU (Terminal, for example) has the Accessibility permission in System Settings, Privacy & Security.
 - Leave: `Ctrl + Option + G` releases the keyboard, then `Cmd + Q` quits. `Cmd + F` leaves full screen.
+- The launcher is rofi 1.7.5 through XWayland here, because Arch Linux ARM does not carry rofi 2 yet.
+
+### Mac with the x86 ISO
+
+`scripts/try-bambo.sh out/bambo-os-*.iso` boots the ISO full screen. An Intel Mac uses the hypervisor and is fast. Apple Silicon emulates the x86 CPU: about 9 minutes to the desktop on an M5, and slow enough that parts of the desktop can fail to start.
 
 Other hypervisors: give the VM at least 4 GB RAM and enable 3D acceleration. Hyprland needs working OpenGL. Without acceleration it falls back to software rendering, which is slow.
 

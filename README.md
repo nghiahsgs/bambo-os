@@ -45,6 +45,8 @@ The screenshot is taken by CI from the live ISO running in QEMU. Status: v0.1, e
 
    It asks for disk, hostname, username and password, then wipes the disk and installs. It needs an internet connection (`nmtui` for Wi-Fi).
 
+On an Apple Silicon Mac, skip the ISO. `make arm64` builds a ready-to-boot arm64 image and `make try` opens it full screen at native CPU speed. See [docs/quickstart.md](docs/quickstart.md).
+
 More detail: [docs/quickstart.md](docs/quickstart.md).
 
 ## Keyboard
@@ -113,7 +115,15 @@ CI builds two images: the release ISO, and a test ISO that is the same plus a sm
 - `bambo-install` (unattended mode) installs to a blank virtual disk, and that disk then boots to the desktop. Last measured: 547 packages, 5.5 GB on disk, 1 min 33 s on the CI network
 - Memory in use about 30 s after the desktop is up: about 600 MB in the live session, about 530 MB installed (target 800 MB or less, measured in a 4 GB VM with software rendering)
 
+Checked by hand on one machine (MacBook Pro M5, QEMU 11.1 with HVF), not by CI:
+
+- `make arm64` builds the arm64 image from Arch Linux ARM. Last measured: 1.5 GB image, 525 packages, 3.7 GB installed
+- The image boots to the Hyprland desktop in about 8 s at 1512x982, with the top bar and the dock. Memory in use at idle: about 350 MB
+- Terminal, Chromium (native Wayland) and the cheat sheet open, and the network works
+
 Not verified yet:
+
+- The arm64 image beyond the list above: recording, screenshots, audio and key presses from a real keyboard were not tested, and it has no CI job
 
 - Real hardware of any kind, and UEFI boot (CI covers the BIOS path only)
 - Wi-Fi setup, audio, laptop keys, multi-monitor

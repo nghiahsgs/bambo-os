@@ -28,6 +28,9 @@ Short record of choices made while implementing the PRD ([PRD.md](PRD.md)), with
 
 - **Scale guard.** Monitor scale is `auto`, which is right for HiDPI laptops. QEMU on macOS reports a tiny physical display, and `auto` then doubled a 720x400 mode into an unusable desktop (found on the first local run). The start hook now falls back to scale 1 when the scaled desktop would be narrower than 1100 px.
 
+- **arm64 is a disk image, not an ISO.** archiso targets x86_64 only. `scripts/build-arm64.sh` runs `pacstrap` from Arch Linux ARM into a raw disk inside an arm64 container and ships it as qcow2, already installed. The idea and the container bootstrap come from [omacom/try-omarchy](https://github.com/omacom/try-omarchy) (MIT). Their patched QEMU, GPU acceleration and Mac integrations are not used: `make try` runs stock Homebrew QEMU with software rendering.
+- **arm64 differences.** Kernel is `linux-aarch64`, boot is systemd-boot at the removable EFI path, no microcode, firmware packages or GRUB (`arm64/packages.exclude`). rofi is 1.7.5 through XWayland there.
+
 ## Before going public
 
 - Done: release ISOs no longer contain `bambo-smoke`, the root service CI uses to report from inside the VM and to run an unattended install. `make iso` leaves it out. Only `make iso-test` (`BAMBO_SMOKE=1`) includes it, and CI tests that second image. The two images differ by that service only.

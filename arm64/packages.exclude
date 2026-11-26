@@ -1,0 +1,8 @@
+# Packages from iso/packages.x86_64 that the arm64 image leaves out.
+linux
+linux-firmware
+sof-firmware
+intel-ucode
+amd-ucode
+grub
+efibootmgr
