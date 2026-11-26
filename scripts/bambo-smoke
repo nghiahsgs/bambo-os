@@ -28,6 +28,34 @@ else
   )
 fi
 
+# Install test: only when the VM carries the SMBIOS OEM string "bambo-smoke-install".
+# Runs bambo-install unattended on the blank virtio disk, plants this script on the
+# installed system so the next boot reports too, then powers off.
+if grep -qa bambo-smoke-install /sys/firmware/dmi/entries/11-0/raw 2>/dev/null; then
+  for _ in {1..180}; do
+    systemctl is-active --quiet pacman-init.service && break
+    sleep 1
+  done
+  if BAMBO_UNATTENDED=1 BAMBO_DISK=/dev/vda BAMBO_HOSTNAME=bambovm BAMBO_USER=dev \
+    BAMBO_PASSWORD=bambo-ci-only bambo-install >/tmp/bambo-install.log 2>&1; then
+    mount /dev/vda2 /mnt
+    install -m 755 /usr/local/bin/bambo-smoke /mnt/usr/local/bin/bambo-smoke
+    printf '[Unit]\nAfter=multi-user.target\n[Service]\nExecStart=/usr/local/bin/bambo-smoke\n[Install]\nWantedBy=multi-user.target\n' \
+      >/mnt/etc/systemd/system/bambo-smoke.service
+    ln -s ../bambo-smoke.service /mnt/etc/systemd/system/multi-user.target.wants/bambo-smoke.service
+    say "BAMBO_INSTALLED_PKGS=$(pacman -Qq --root /mnt | wc -l)"
+    say "BAMBO_INSTALLED_DISK_MB=$(df -m --output=used /mnt | tail -n1 | tr -d ' ')"
+    umount /mnt
+    say "BAMBO_INSTALL_TIME=$(grep -ao 'installed on .*' /tmp/bambo-install.log | tail -n1)"
+    say "BAMBO_INSTALL=ok"
+  else
+    say "BAMBO_INSTALL=failed"
+    while IFS= read -r line; do say "LOG: $line"; done < <(tail -n 40 /tmp/bambo-install.log)
+  fi
+  say "BAMBO_SMOKE_DONE"
+  exit 0
+fi
+
 sleep 30
 say "BAMBO_MEM_USED_MB=$(free -m | awk '/^Mem:/ {print $3}')"
 say "BAMBO_WAYBAR=$(pgrep -x waybar >/dev/null && echo up || echo down)"

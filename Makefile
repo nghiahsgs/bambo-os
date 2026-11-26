@@ -2,7 +2,7 @@
 #   make iso       build out/bambo-os-<date>-x86_64.iso (native on Arch, Docker elsewhere)
 #   make lint      shellcheck + bash -n + Lua syntax + JSON checks
 #   make test-vm   boot the newest ISO in QEMU with a window
-#   make smoke     headless boot test with serial markers and a screenshot
+#   make smoke     headless QEMU tests: live session, then bambo-install on a blank disk
 #   make wallpaper regenerate themes/tessera/wallpaper.png
 #   make clean
 
@@ -49,7 +49,8 @@ test-vm: out/test-disk.qcow2
 
 smoke:
 	@[ -n "$(ISO)" ] || { echo "No ISO in out/. Run: make iso"; exit 1; }
-	scripts/smoke-test.sh "$(ISO)"
+	scripts/smoke-test.sh "$(ISO)" live
+	scripts/smoke-test.sh "$(ISO)" install
 
 wallpaper:
 	python3 themes/tessera/make-wallpaper.py themes/tessera/wallpaper.png

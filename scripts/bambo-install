@@ -165,6 +165,7 @@ fi
 
 # ---- packages ----------------------------------------------------------------
 
+started="$(date +%s)"
 step "Installing ${#packages[@]} packages (this is the long part)"
 pacstrap -K "$MNT" "${packages[@]}"
 genfstab -U "$MNT" >>"$MNT/etc/fstab"
@@ -224,7 +225,7 @@ sync
 umount -R "$MNT"
 trap - EXIT
 
-step "BamboOS is installed on $disk"
+step "BamboOS is installed on $disk in $(( ($(date +%s) - started) / 60 )) min $(( ($(date +%s) - started) % 60 )) s"
 echo "Remove the USB stick, then reboot. Log in as $username."
 if [[ $unattended != 1 ]] && gum confirm 'Reboot now?'; then
   systemctl reboot

@@ -15,7 +15,7 @@ jobs:
       options: --privileged -v /dev:/dev
     steps:
       - name: Install build tools
-        run: pacman -Syu --noconfirm archiso make git shellcheck lua python qemu-base qemu-hw-display-virtio-vga qemu-hw-display-virtio-gpu
+        run: pacman -Syu --noconfirm archiso make git qemu-img shellcheck lua python qemu-base qemu-hw-display-virtio-vga qemu-hw-display-virtio-gpu
 
       - uses: actions/checkout@v4
 
@@ -53,14 +53,25 @@ jobs:
           retention-days: 7
           compression-level: 0
 
-      - name: Smoke test (boot in QEMU)
+      - name: Smoke test (boot the live ISO in QEMU)
         run: |
-          ls -l /dev/kvm || true
-          scripts/smoke-test.sh "$(ls out/bambo-os-*.iso | head -n1)"
+          scripts/smoke-test.sh "$(ls out/bambo-os-*.iso | head -n1)" live
           {
-            echo '### Smoke test'
+            echo '### Live session'
             echo '```'
-            grep -a 'BAMBO_' out/smoke/serial.log
+            grep -a 'BAMBO_' out/smoke/live.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Install test (bambo-install on a blank disk, then boot it)
+        run: |
+          scripts/smoke-test.sh "$(ls out/bambo-os-*.iso | head -n1)" install
+          {
+            echo '### Install'
+            echo '```'
+            grep -a 'BAMBO_' out/smoke/install.log
+            echo '--- installed system'
+            grep -a 'BAMBO_' out/smoke/installed.log
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -69,5 +80,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: smoke
-          path: out/smoke/
+          path: |
+            out/smoke/*.png
+            out/smoke/*.log
           if-no-files-found: ignore
