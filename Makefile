@@ -1,6 +1,7 @@
 # BamboOS build entry points.
 #   make iso       build out/bambo-os-<date>-x86_64.iso (native on Arch, Docker elsewhere)
 #   make lint      shellcheck + bash -n + Lua syntax + JSON checks
+#   make try       boot the newest ISO full screen in QEMU (macOS and Linux)
 #   make test-vm   boot the newest ISO in QEMU with a window
 #   make iso-test  build out/test/*.iso with the bambo-smoke test service included
 #   make smoke     headless QEMU tests on the test ISO: live session, then bambo-install
@@ -13,7 +14,7 @@ IS_ARCH := $(shell command -v mkarchiso >/dev/null 2>&1 && echo yes)
 HOST_ARCH := $(shell uname -m)
 SCRIPTS := $(wildcard scripts/bambo-*) $(wildcard scripts/*.sh)
 
-.PHONY: iso iso-test lint test-vm smoke wallpaper clean
+.PHONY: iso iso-test lint try test-vm smoke wallpaper clean
 
 TEST_ISO = $(shell ls -t out/test/bambo-os-*.iso 2>/dev/null | head -n1)
 SMOKE ?= 0
@@ -43,6 +44,9 @@ lint:
 	@python3 -c "import json,re,sys; s=open('config/waybar/config.jsonc').read(); json.loads(re.sub(r'^\s*//.*$$','',s,flags=re.M)); print('waybar json: ok')"
 	@dups=$$(grep -hv '^\s*#' iso/packages.x86_64 iso/packages.live | sed '/^\s*$$/d' | sort | uniq -d); \
 	 [ -z "$$dups" ] && echo "package list: ok" || { echo "duplicate packages: $$dups"; exit 1; }
+
+try:
+	scripts/try-bambo.sh
 
 test-vm:
 	@[ -n "$(ISO)" ] || { echo "No ISO in out/. Run: make iso"; exit 1; }

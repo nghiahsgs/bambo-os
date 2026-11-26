@@ -44,23 +44,22 @@ make test-vm
 
 This attaches a 32 GB virtual disk, so you can also test `bambo-install`.
 
-macOS on Apple Silicon (x86 emulation, slow: about 9 minutes to the desktop on an M5):
+macOS, full screen from the start:
 
 ```bash
 brew install qemu
 ```
 
 ```bash
-qemu-system-x86_64 -accel tcg,thread=multi -cpu max -smp 4 -m 4096 -vga none -device virtio-vga -display cocoa,zoom-to-fit=off -device qemu-xhci -device usb-tablet -cdrom out/bambo-os-*.iso -boot d
+make try
 ```
 
-QEMU on macOS tells the guest to use the size of its window at start, 720x400. Once the desktop is up, open a terminal (`Super + Enter`) and set a real resolution:
+`scripts/try-bambo.sh` gives the guest one mode with the shape of your main display (1512x982 on a 14 inch MacBook Pro) and QEMU stretches it over the whole screen. Settings: `BAMBO_RES=1280x800`, `BAMBO_WINDOWED=1`, `BAMBO_MEM`, `BAMBO_CPUS`.
 
-```bash
-hyprctl eval "hl.monitor{output='',mode='1280x800',position='auto',scale=1}"
-```
-
-Click inside the window so it grabs the keyboard, then the Command key is `Super`. `Ctrl + Option + G` releases the grab.
+- Apple Silicon runs this x86 ISO under emulation. It is slow: about 9 minutes to the desktop on an M5. An Intel Mac uses the hypervisor and is fast.
+- Command is `Super` inside the VM.
+- macOS keeps `Cmd + Space` and `Cmd + Tab` for itself unless the app that starts QEMU (Terminal, for example) has the Accessibility permission in System Settings, Privacy & Security.
+- Leave: `Ctrl + Option + G` releases the keyboard, then `Cmd + Q` quits. `Cmd + F` leaves full screen.
 
 Other hypervisors: give the VM at least 4 GB RAM and enable 3D acceleration. Hyprland needs working OpenGL. Without acceleration it falls back to software rendering, which is slow.
 

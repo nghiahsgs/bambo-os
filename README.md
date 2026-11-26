@@ -31,7 +31,7 @@ The screenshot is taken by CI from the live ISO running in QEMU. Status: v0.1, e
    sudo dd if=out/bambo-os-*.iso of=/dev/sdX bs=4M status=progress oflag=sync
    ```
 
-   Or boot it in a VM: `make test-vm` (Linux with KVM).
+   Or boot it in a VM: `make try` (full screen, macOS or Linux) or `make test-vm` (window, Linux with KVM).
 
 3. Boot. Turn Secure Boot off in the firmware first. You land in the desktop with no password.
 
@@ -87,7 +87,7 @@ config/             dotfiles, the single source of truth (lands in /etc/skel)
 scripts/            bambo-* commands, build-iso.sh, smoke-test.sh, verify-hypr.sh
 themes/tessera/     design tokens, logo, wallpaper generator
 docs/               quickstart, agent mode, decisions, PRD
-Makefile            make iso / lint / test-vm / smoke
+Makefile            make iso / lint / try / test-vm / smoke
 ```
 
 ## Agent mode
