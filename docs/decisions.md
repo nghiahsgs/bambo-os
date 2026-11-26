@@ -21,6 +21,16 @@ Short record of choices made while implementing the PRD ([PRD.md](PRD.md)), with
 - **Single source for dotfiles.** `config/` is copied into `/etc/skel` at build time. The live user's home is created from `/etc/skel` at boot, and the installer copies the same `/etc/skel` to the target. There is one copy of every config file in the repo.
 - **Window title bars with coloured dots, and a floating activity card,** from the early mockup are not in v0.1. Hyprland has no built-in title bars (that needs a compiled plugin), and the card needs a widget engine. Both would add packages. CPU and RAM are in the top bar.
 
+- **Auto-login stays on after install.** The PRD says "first boot only". With no display manager and no disk encryption, a login prompt adds little, so it is permanent and one `rm` turns it off (see quickstart).
+- **Typed answers in the installer use plain shell prompts**, not `gum input`. Under a scripted terminal, gum 2.0 returned empty text for typed input. The disk menu and yes/no prompts still use gum.
+- **Fonts.** A fontconfig file makes Inter the default sans font and JetBrains Mono the default monospace font for every app.
+- **`docs/PRD.md` is a cleaned-up copy** of the original PRD, not a byte-for-byte one.
+
+## Before going public
+
+- The live ISO ships `bambo-smoke`, a root service used by CI. When the VM carries the SMBIOS OEM string `bambo-smoke-install` it runs an unattended install on `/dev/vda`. Real hardware does not carry that string, but a public release should build without this service.
+- CI covers BIOS boot only. Test UEFI boot and a real laptop first.
+
 ## Risks
 
 - Arch is rolling. A Hyprland update can change config syntax, as the move to Lua did. The CI build runs against current Arch on every push, so breakage shows up there first. A weekly scheduled run would catch it without a push.

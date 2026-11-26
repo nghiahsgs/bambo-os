@@ -106,7 +106,9 @@ Checked by CI on every push, against current Arch (see the Actions tab):
 - The ISO builds. Last measured: 2.2 GB (target 2.5 GB or less)
 - The ISO boots in QEMU (BIOS) to the Hyprland desktop with waybar running
 - Inside that VM: the terminal opens, `bambo-shot` saves a screenshot, `bambo-record` saves a recording, Chromium starts
-- `bambo-install` installs to a blank virtual disk, and that disk then boots to the desktop. Last measured: 547 packages, 5.5 GB on disk, 1 min 33 s on the CI network
+- Real key presses sent into the VM open the terminal, launcher, cheat sheet and power menu, toggle recording and lock the screen
+- Chromium runs as a native Wayland client
+- `bambo-install` (unattended mode) installs to a blank virtual disk, and that disk then boots to the desktop. Last measured: 547 packages, 5.5 GB on disk, 1 min 33 s on the CI network
 - Memory in use about 30 s after the desktop is up: about 600 MB in the live session, about 530 MB installed (target 800 MB or less, measured in a 4 GB VM with software rendering)
 
 Not verified yet:
@@ -114,7 +116,7 @@ Not verified yet:
 - Real hardware of any kind, and UEFI boot (CI covers the BIOS path only)
 - Wi-Fi setup, audio, laptop keys, multi-monitor
 - Boot time
-- Key presses themselves. CI runs the commands the keys are bound to, it does not press `Super + Enter`.
+- The interactive questions of `bambo-install` as a whole. CI uses the unattended mode. The disk menu and yes/no prompts were checked separately in a scripted terminal.
 
 Known gaps against the v0.1 targets:
 

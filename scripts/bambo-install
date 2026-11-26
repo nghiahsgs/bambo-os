@@ -28,13 +28,29 @@ step() {
   fi
 }
 
+# ask <prompt> [default]: read one line from the terminal.
+ask() {
+  local answer
+  read -r -p "$1${2:+ [$2]}: " answer </dev/tty || die "cancelled."
+  printf '%s' "${answer:-${2:-}}"
+}
+
+# ask_secret <prompt>: same, without echo.
+ask_secret() {
+  local answer
+  read -r -s -p "$1: " answer </dev/tty || die "cancelled."
+  printf '\n' >/dev/tty
+  printf '%s' "$answer"
+}
+
 # Partition path for a disk: /dev/sda -> /dev/sda2, /dev/nvme0n1 -> /dev/nvme0n1p2.
 part() {
   if [[ $1 =~ [0-9]$ ]]; then echo "${1}p${2}"; else echo "${1}${2}"; fi
 }
 
-# Unmount the target. pacstrap -K leaves a gpg-agent behind that keeps the
-# filesystem busy, so stop anything still tied to the target first.
+# Unmount the target. Something started during pacstrap (most likely the
+# gpg-agent of the new keyring) can keep it busy, so stop anything still tied
+# to the target first and fall back to a lazy unmount after a sync.
 release_target() {
   local p
   mountpoint -q "$MNT" 2>/dev/null || return 0
@@ -46,7 +62,7 @@ release_target() {
   done
   sync
   sleep 1
-  umount -R "$MNT" 2>/dev/null || umount -R -l "$MNT"
+  umount -R "$MNT" 2>/dev/null || { echo "note: target busy, used lazy unmount"; umount -R -l "$MNT"; }
 }
 
 cleanup() {
@@ -109,18 +125,18 @@ fi
 (($(blockdev --getsize64 "$disk") >= MIN_BYTES)) || die "$disk is smaller than 16 GB."
 
 hostname="${BAMBO_HOSTNAME:-}"
-[[ -n $hostname ]] || hostname="$(gum input --header 'Hostname' --value bambo)" || die "cancelled."
+[[ -n $hostname ]] || hostname="$(ask 'Hostname' bambo)"
 [[ $hostname =~ ^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$ ]] || die "invalid hostname: use a-z, 0-9 and '-'."
 
 username="${BAMBO_USER:-}"
-[[ -n $username ]] || username="$(gum input --header 'Username' --placeholder 'lowercase, e.g. dev')" || die "cancelled."
+[[ -n $username ]] || username="$(ask 'Username (lowercase, e.g. dev)')"
 [[ $username =~ ^[a-z_][a-z0-9_-]{0,30}$ ]] || die "invalid username: start with a-z, then a-z, 0-9, '_' or '-'."
 [[ $username != root ]] || die "username cannot be root."
 
 password="${BAMBO_PASSWORD:-}"
 if [[ -z $password ]]; then
-  password="$(gum input --password --header "Password for $username")" || die "cancelled."
-  again="$(gum input --password --header 'Repeat the password')" || die "cancelled."
+  password="$(ask_secret "Password for $username")"
+  again="$(ask_secret 'Repeat the password')"
   [[ $password == "$again" ]] || die "passwords do not match."
 fi
 [[ -n $password ]] || die "password cannot be empty."
@@ -139,7 +155,7 @@ gum style --border rounded --border-foreground '#ff8a4c' --padding '0 2' \
   "EVERYTHING on $disk will be erased." 2>/dev/null || true
 
 if [[ $unattended != 1 ]]; then
-  typed="$(gum input --header "Type $disk to confirm")" || die "cancelled."
+  typed="$(ask "Type $disk to confirm")"
   [[ $typed == "$disk" ]] || die "confirmation did not match. Nothing was changed."
 fi
 

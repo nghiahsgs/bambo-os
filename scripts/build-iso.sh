@@ -28,7 +28,7 @@ rm -f "$profile/packages.live"
 # config/ is the single source of truth for dotfiles. It lands in /etc/skel.
 skel="$profile/airootfs/etc/skel"
 mkdir -p "$skel/.config"
-for dir in hypr kitty waybar rofi mako mpv tmux bambo; do
+for dir in hypr kitty waybar rofi mako mpv tmux bambo fontconfig; do
   cp -a "$repo/config/$dir" "$skel/.config/"
 done
 cp "$repo/config/starship.toml" "$skel/.config/starship.toml"

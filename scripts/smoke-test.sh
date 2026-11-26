@@ -32,11 +32,11 @@ monitor() {
 # boot <name> <timeout seconds> <qemu args...>
 # Runs until the guest writes BAMBO_SMOKE_DONE, powers off, or the timeout hits.
 boot() {
-  local name="$1" limit="$2" result='timed out'
+  local name="$1" limit="$2" result='timed out' handled=0 req requests
   shift 2
   log="$outdir/$name.log"
   : >"$log"
-  rm -f "$outdir/$name.png" "$outdir/$name-terminal.png"
+  rm -f "$outdir/$name".png "$outdir/$name"-*.png
 
   qemu-system-x86_64 "${accel[@]}" -m 4096 -smp 2 \
     -vga virtio -display none \
@@ -47,10 +47,16 @@ boot() {
 
   for ((i = 0; i < limit; i++)); do
     kill -0 "$qemu" 2>/dev/null || { result='qemu exited'; break; }
-    if [[ ! -f $outdir/$name-terminal.png ]] && grep -q BAMBO_TERMINAL "$log"; then
-      sleep 1
-      monitor "screendump $outdir/$name-terminal.png -f png" || true
-    fi
+    # Requests from the guest: type a key combo, or take a named screenshot.
+    mapfile -t requests < <(grep -ao 'BAMBO_\(KEY_SEND\|SHOT\)=[A-Za-z0-9_-]*' "$log" || true)
+    while ((handled < ${#requests[@]})); do
+      req="${requests[handled]}"
+      handled=$((handled + 1))
+      case "$req" in
+        BAMBO_KEY_SEND=*) monitor "sendkey ${req#*=}" || true ;;
+        BAMBO_SHOT=*) monitor "screendump $outdir/$name-${req#*=}.png -f png" || true ;;
+      esac
+    done
     if grep -q BAMBO_SMOKE_DONE "$log"; then result='finished'; break; fi
     sleep 1
   done
@@ -71,7 +77,7 @@ need() {
 
 case "$mode" in
   live)
-    boot live 420 -cdrom "$iso" -boot d -smbios type=11,value=bambo-smoke-full
+    boot live 600 -cdrom "$iso" -boot d -smbios type=11,value=bambo-smoke-full
     need BAMBO_LIVE_READY "live system did not boot"
     need BAMBO_DESKTOP_READY "Hyprland did not start"
     need 'BAMBO_WAYBAR=up' "waybar is not running"
@@ -79,6 +85,10 @@ case "$mode" in
     need 'BAMBO_SCREENSHOT=ok' "bambo-shot saved no file"
     need 'BAMBO_RECORDING=ok' "bambo-record saved no file"
     need 'BAMBO_BROWSER=up' "browser did not start"
+    need 'BAMBO_BROWSER_XWAYLAND=false' "Chromium is not running as a native Wayland client"
+    for k in TERMINAL LAUNCHER CHEATSHEET POWER RECORD LOCK; do
+      need "BAMBO_KEY_$k=ok" "key binding $k did not fire"
+    done
     echo "PASS: live desktop is up, terminal, screenshot, recording and browser work"
     ;;
   install)

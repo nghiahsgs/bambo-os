@@ -47,6 +47,7 @@ if grep -qa bambo-smoke-install /sys/firmware/dmi/entries/11-0/raw 2>/dev/null; 
     say "BAMBO_INSTALLED_DISK_MB=$(df -m --output=used /mnt | tail -n1 | tr -d ' ')"
     umount /mnt
     say "BAMBO_INSTALL_TIME=$(grep -ao 'installed on .*' /tmp/bambo-install.log | tail -n1)"
+    say "BAMBO_INSTALL_LAZY_UMOUNT=$(grep -c 'lazy unmount' /tmp/bambo-install.log)"
     say "BAMBO_INSTALL=ok"
   else
     say "BAMBO_INSTALL=failed"
@@ -89,5 +90,32 @@ if grep -qa bambo-smoke-full /sys/firmware/dmi/entries/11-0/raw 2>/dev/null; the
   as_user hyprctl -i 0 dispatch 'hl.dsp.exec_cmd("chromium")'
   sleep 25
   say "BAMBO_BROWSER=$(pgrep -x chromium >/dev/null && echo up || echo down)"
+  xw="$(runuser -u bambo -- env XDG_RUNTIME_DIR="$run" hyprctl -i 0 clients -j 2>/dev/null |
+    jq -r '[.[] | select(.class | test("chrom"; "i")) | .xwayland] | first' 2>/dev/null)"
+  say "BAMBO_BROWSER_XWAYLAND=${xw:-unknown}"
+  say "BAMBO_SHOT=desktop"
+  sleep 5
+
+  # Real key presses. The host sees BAMBO_KEY_SEND and types it into the VM
+  # through the QEMU monitor. key <combo> <process> <label> [screenshot]
+  key() {
+    local before after
+    before="$(pgrep -cx "$2" || true)"
+    say "BAMBO_KEY_SEND=$1"
+    sleep 7
+    after="$(pgrep -cx "$2" || true)"
+    say "BAMBO_KEY_$3=$([[ ${after:-0} -gt ${before:-0} ]] && echo ok || echo no)"
+    if [[ -n ${4:-} ]]; then say "BAMBO_SHOT=$4"; sleep 5; fi
+  }
+  key meta_l-ret kitty TERMINAL
+  key meta_l-spc rofi LAUNCHER launcher
+  say "BAMBO_KEY_SEND=esc"; sleep 5
+  key meta_l-slash rofi CHEATSHEET keys
+  say "BAMBO_KEY_SEND=esc"; sleep 5
+  key meta_l-shift-e rofi POWER power
+  say "BAMBO_KEY_SEND=esc"; sleep 5
+  key meta_l-shift-r wf-recorder RECORD recording
+  say "BAMBO_KEY_SEND=meta_l-shift-r"; sleep 6
+  key meta_l-esc hyprlock LOCK lock
 fi
 say "BAMBO_SMOKE_DONE"
