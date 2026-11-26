@@ -33,10 +33,24 @@ part() {
   if [[ $1 =~ [0-9]$ ]]; then echo "${1}p${2}"; else echo "${1}${2}"; fi
 }
 
+# Unmount the target. pacstrap -K leaves a gpg-agent behind that keeps the
+# filesystem busy, so stop anything still tied to the target first.
+release_target() {
+  local p
+  mountpoint -q "$MNT" 2>/dev/null || return 0
+  for p in /proc/[0-9]*; do
+    if [[ $(readlink "$p/root" 2>/dev/null) == "$MNT"* ]] ||
+      tr '\0' ' ' <"$p/cmdline" 2>/dev/null | grep -qF "$MNT/"; then
+      kill "${p#/proc/}" 2>/dev/null || true
+    fi
+  done
+  sync
+  sleep 1
+  umount -R "$MNT" 2>/dev/null || umount -R -l "$MNT"
+}
+
 cleanup() {
-  if mountpoint -q "$MNT" 2>/dev/null; then
-    umount -R "$MNT" 2>/dev/null || true
-  fi
+  release_target 2>/dev/null || true
 }
 
 # ---- preflight ---------------------------------------------------------------
@@ -221,8 +235,7 @@ fi
 sed -i -e 's/^GRUB_TIMEOUT=.*/GRUB_TIMEOUT=1/' -e 's/^GRUB_DISTRIBUTOR=.*/GRUB_DISTRIBUTOR="BamboOS"/' "$MNT/etc/default/grub"
 arch-chroot "$MNT" grub-mkconfig -o /boot/grub/grub.cfg >/dev/null 2>&1
 
-sync
-umount -R "$MNT"
+release_target
 trap - EXIT
 
 step "BamboOS is installed on $disk in $(( ($(date +%s) - started) / 60 )) min $(( ($(date +%s) - started) % 60 )) s"

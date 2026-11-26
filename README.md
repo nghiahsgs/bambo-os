@@ -11,7 +11,9 @@ BamboOS is the bicycle of Linux distros: light, simple, nothing extra.
 - **Agent ready.** Docker, Node LTS, Python + uv and tmux are preinstalled. `bambo-agent on` turns the machine into a headless box for AI coding agents.
 - **Plain Arch underneath.** No forked packages, no extra repo. `pacman -Syu` updates it.
 
-Status: v0.1, early. See [Status](#status) for what is verified and what is not.
+![BamboOS live session: terminal and browser tiled, top bar, dock](docs/screenshot.png)
+
+The screenshot is taken by CI from the live ISO running in QEMU. Status: v0.1, early. See [Status](#status) for what is verified and what is not.
 
 ## Try it in 5 minutes
 
@@ -98,23 +100,27 @@ No desktop on the next login, `sshd` and Docker enabled, a long-running tmux ses
 
 ## Status
 
-Verified in CI on every push (see the Actions tab):
+Checked by CI on every push, against current Arch (see the Actions tab):
 
-- Shell scripts pass `shellcheck`, Lua passes `luac`
-- Hyprland itself parses the config (`Hyprland --verify-config`)
-- `make iso` builds, the ISO boots in QEMU and the live desktop starts (serial markers from `bambo-smoke`)
+- Shell scripts pass `shellcheck`, Lua passes `luac`, Hyprland itself accepts the config (`Hyprland --verify-config`)
+- The ISO builds. Last measured: 2.2 GB (target 2.5 GB or less)
+- The ISO boots in QEMU (BIOS) to the Hyprland desktop with waybar running
+- Inside that VM: the terminal opens, `bambo-shot` saves a screenshot, `bambo-record` saves a recording, Chromium starts
+- `bambo-install` installs to a blank virtual disk, and that disk then boots to the desktop
+- Memory in use in the live session about 30 s after the desktop is up: about 600 MB (target 800 MB or less, measured in a 4 GB VM with software rendering)
 
 Not verified yet:
 
-- `bambo-install` end to end on a clean VM
-- Screenshot, recording and browser launch inside a real session
-- Idle RAM and boot time on real hardware
+- Real hardware of any kind, and UEFI boot (CI covers the BIOS path only)
+- Wi-Fi setup, audio, laptop keys, multi-monitor
+- Boot time
+- Key presses themselves. CI runs the commands the keys are bound to, it does not press `Super + Enter`.
 
 Known gaps against the v0.1 targets:
 
-- Package count is about 550 with dependencies. The 250 target is not reachable with Chromium, Hyprland and Docker in the set.
+- Package count is 550 with dependencies (target 250). The explicit list is about 60 packages. Chromium, mpv, Hyprland and Docker bring the rest, so the target is not reachable with all four tool groups in the set.
 - No NVIDIA support, no Secure Boot, no disk encryption.
-- The installer needs the network (it uses `pacstrap`).
+- The installer needs the network (it uses `pacstrap`, about 1.2 GB download).
 
 Design choices and their reasons are in [docs/decisions.md](docs/decisions.md).
 
