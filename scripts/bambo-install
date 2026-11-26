@@ -1,0 +1,231 @@
+#!/usr/bin/env bash
+# bambo-install: install BamboOS from the live session onto a disk.
+#
+# Asks four things: disk, hostname, username, password. Then it wipes the disk,
+# creates an ext4 root, installs the BamboOS package set with pacstrap and sets
+# up GRUB. Needs an internet connection (packages come from the Arch mirrors).
+#
+# Unattended mode for tests (still refuses mounted disks and the live medium):
+#   BAMBO_UNATTENDED=1 BAMBO_DISK=/dev/vda BAMBO_HOSTNAME=bambo \
+#   BAMBO_USER=dev BAMBO_PASSWORD=secret bambo-install
+set -euo pipefail
+
+SHARE=/usr/share/bambo
+MNT=/mnt/bambo
+MIN_BYTES=$((16 * 1024 * 1024 * 1024))
+unattended="${BAMBO_UNATTENDED:-0}"
+
+die() {
+  printf '\nbambo-install: %s\n' "$*" >&2
+  exit 1
+}
+
+step() {
+  if command -v gum >/dev/null 2>&1; then
+    gum style --foreground '#5b8def' --bold "==> $*"
+  else
+    printf '==> %s\n' "$*"
+  fi
+}
+
+# Partition path for a disk: /dev/sda -> /dev/sda2, /dev/nvme0n1 -> /dev/nvme0n1p2.
+part() {
+  if [[ $1 =~ [0-9]$ ]]; then echo "${1}p${2}"; else echo "${1}${2}"; fi
+}
+
+cleanup() {
+  if mountpoint -q "$MNT" 2>/dev/null; then
+    umount -R "$MNT" 2>/dev/null || true
+  fi
+}
+
+# ---- preflight ---------------------------------------------------------------
+
+if [[ $EUID -ne 0 ]]; then
+  exec sudo --preserve-env=BAMBO_UNATTENDED,BAMBO_DISK,BAMBO_HOSTNAME,BAMBO_USER,BAMBO_PASSWORD,BAMBO_ALLOW_NON_LIVE "$0" "$@"
+fi
+
+for cmd in gum pacstrap genfstab arch-chroot sfdisk wipefs mkfs.ext4 mkfs.fat lsblk findmnt curl; do
+  command -v "$cmd" >/dev/null 2>&1 || die "missing command: $cmd"
+done
+
+if [[ ! -d /run/archiso && ${BAMBO_ALLOW_NON_LIVE:-0} != 1 ]]; then
+  die "this is not the BamboOS live session. Boot the ISO and run it from there."
+fi
+
+[[ -r $SHARE/packages.x86_64 ]] || die "package list not found at $SHARE/packages.x86_64"
+mapfile -t packages < <(sed -e 's/#.*//' -e 's/[[:space:]]//g' -e '/^$/d' "$SHARE/packages.x86_64")
+((${#packages[@]} > 0)) || die "package list is empty"
+
+if ! curl -fsS --max-time 10 -o /dev/null https://geo.mirror.pkgbuild.com/; then
+  die "no internet connection. Connect first (run: nmtui), then start bambo-install again."
+fi
+
+# ---- questions ---------------------------------------------------------------
+
+gum style --border rounded --border-foreground '#5b8def' --padding '0 2' \
+  'Install BamboOS' 'Four questions, then the disk is wiped and BamboOS is installed.' 2>/dev/null || true
+
+# The disk the live system booted from must never be offered.
+live_disk=""
+if live_src="$(findmnt -no SOURCE /run/archiso/bootmnt 2>/dev/null)" && [[ -b $live_src ]]; then
+  live_pk="$(lsblk -no PKNAME "$live_src" 2>/dev/null | head -n1)"
+  if [[ -n $live_pk ]]; then live_disk="/dev/$live_pk"; else live_disk="$live_src"; fi
+fi
+
+mapfile -t disks < <(lsblk -dnpo NAME,TYPE | awk '$2 == "disk" {print $1}' | grep -vE '/dev/(zram|loop)' || true)
+choices=()
+for d in "${disks[@]}"; do
+  [[ $d == "$live_disk" ]] && continue
+  choices+=("$d  $(lsblk -dno SIZE,MODEL "$d" | tr -s ' ')")
+done
+((${#choices[@]} > 0)) || die "no installable disk found."
+
+disk="${BAMBO_DISK:-}"
+if [[ -z $disk ]]; then
+  pick="$(printf '%s\n' "${choices[@]}" | gum choose --header 'Disk to install on (everything on it will be erased)')" || die "cancelled."
+  disk="${pick%% *}"
+fi
+[[ -b $disk ]] || die "$disk is not a block device."
+[[ $(lsblk -dno TYPE "$disk") == disk ]] || die "$disk is not a whole disk."
+[[ $disk != "$live_disk" ]] || die "$disk is the live medium. Pick another disk."
+if lsblk -nro MOUNTPOINTS "$disk" | grep -q .; then
+  die "$disk has mounted partitions. Unmount them first."
+fi
+(($(blockdev --getsize64 "$disk") >= MIN_BYTES)) || die "$disk is smaller than 16 GB."
+
+hostname="${BAMBO_HOSTNAME:-}"
+[[ -n $hostname ]] || hostname="$(gum input --header 'Hostname' --value bambo)" || die "cancelled."
+[[ $hostname =~ ^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$ ]] || die "invalid hostname: use a-z, 0-9 and '-'."
+
+username="${BAMBO_USER:-}"
+[[ -n $username ]] || username="$(gum input --header 'Username' --placeholder 'lowercase, e.g. dev')" || die "cancelled."
+[[ $username =~ ^[a-z_][a-z0-9_-]{0,30}$ ]] || die "invalid username: start with a-z, then a-z, 0-9, '_' or '-'."
+[[ $username != root ]] || die "username cannot be root."
+
+password="${BAMBO_PASSWORD:-}"
+if [[ -z $password ]]; then
+  password="$(gum input --password --header "Password for $username")" || die "cancelled."
+  again="$(gum input --password --header 'Repeat the password')" || die "cancelled."
+  [[ $password == "$again" ]] || die "passwords do not match."
+fi
+[[ -n $password ]] || die "password cannot be empty."
+[[ $password != *$'\n'* && $password != *:* ]] || die "password cannot contain ':' or a newline."
+
+if [[ -d /sys/firmware/efi ]]; then firmware=uefi; else firmware=bios; fi
+
+printf '\n'
+gum style --border rounded --border-foreground '#ff8a4c' --padding '0 2' \
+  "Disk:      $disk  ($(lsblk -dno SIZE,MODEL "$disk" | tr -s ' '))" \
+  "Firmware:  $firmware" \
+  "Hostname:  $hostname" \
+  "User:      $username" \
+  "Packages:  ${#packages[@]} explicit" \
+  '' \
+  "EVERYTHING on $disk will be erased." 2>/dev/null || true
+
+if [[ $unattended != 1 ]]; then
+  typed="$(gum input --header "Type $disk to confirm")" || die "cancelled."
+  [[ $typed == "$disk" ]] || die "confirmation did not match. Nothing was changed."
+fi
+
+trap cleanup EXIT
+
+# ---- disk --------------------------------------------------------------------
+
+step "Partitioning $disk ($firmware)"
+wipefs -af "$disk" >/dev/null
+if [[ $firmware == uefi ]]; then
+  sfdisk --quiet "$disk" <<'EOF'
+label: gpt
+size=1GiB, type=uefi, name=ESP
+type=linux, name=bambo-root
+EOF
+else
+  # BIOS on GPT needs a tiny BIOS boot partition for GRUB.
+  sfdisk --quiet "$disk" <<'EOF'
+label: gpt
+size=1MiB, type=21686148-6449-6E6F-744E-656564454649, name=bios-boot
+type=linux, name=bambo-root
+EOF
+fi
+udevadm settle
+first="$(part "$disk" 1)"
+root="$(part "$disk" 2)"
+[[ -b $root ]] || die "partition $root did not appear."
+
+step "Creating filesystems"
+mkfs.ext4 -q -F -L bambo "$root"
+mkdir -p "$MNT"
+mount "$root" "$MNT"
+if [[ $firmware == uefi ]]; then
+  mkfs.fat -F 32 -n BAMBOESP "$first" >/dev/null
+  mount --mkdir -o umask=0077 "$first" "$MNT/boot"
+fi
+
+# ---- packages ----------------------------------------------------------------
+
+step "Installing ${#packages[@]} packages (this is the long part)"
+pacstrap -K "$MNT" "${packages[@]}"
+genfstab -U "$MNT" >>"$MNT/etc/fstab"
+
+step "Copying BamboOS configuration"
+cp -aT /etc/skel "$MNT/etc/skel"
+mkdir -p "$MNT/usr/share/bambo"
+cp -a "$SHARE/." "$MNT/usr/share/bambo/"
+for tool in /usr/local/bin/bambo-*; do
+  [[ $(basename "$tool") == bambo-smoke ]] && continue
+  install -m 755 "$tool" "$MNT/usr/local/bin/"
+done
+
+# ---- system configuration ----------------------------------------------------
+
+step "Configuring the system"
+echo "$hostname" >"$MNT/etc/hostname"
+cat >"$MNT/etc/hosts" <<EOF
+127.0.0.1 localhost
+::1       localhost
+127.0.1.1 $hostname
+EOF
+sed -i 's/^#\(en_US\.UTF-8 UTF-8\)/\1/' "$MNT/etc/locale.gen"
+echo 'LANG=en_US.UTF-8' >"$MNT/etc/locale.conf"
+arch-chroot "$MNT" locale-gen >/dev/null
+arch-chroot "$MNT" ln -sf /usr/share/zoneinfo/UTC /etc/localtime
+arch-chroot "$MNT" hwclock --systohc 2>/dev/null || true
+
+arch-chroot "$MNT" useradd -m -G wheel,docker -s /usr/bin/zsh "$username"
+printf '%s:%s\n' "$username" "$password" | arch-chroot "$MNT" chpasswd
+arch-chroot "$MNT" passwd -l root >/dev/null
+install -m 440 /dev/stdin "$MNT/etc/sudoers.d/10-wheel" <<'EOF'
+%wheel ALL=(ALL:ALL) ALL
+EOF
+
+# Auto-login on tty1 so the machine boots straight to the desktop.
+# Remove this file to get a normal login prompt.
+install -D -m 644 /dev/stdin "$MNT/etc/systemd/system/getty@tty1.service.d/autologin.conf" <<EOF
+[Service]
+ExecStart=
+ExecStart=-/usr/bin/agetty --noreset --noclear --autologin $username - \${TERM}
+EOF
+
+arch-chroot "$MNT" systemctl enable NetworkManager.service systemd-timesyncd.service docker.socket >/dev/null 2>&1
+
+step "Installing the bootloader"
+if [[ $firmware == uefi ]]; then
+  # --removable writes EFI/BOOT/BOOTX64.EFI, which boots without NVRAM entries (VMs, picky firmware).
+  arch-chroot "$MNT" grub-install --target=x86_64-efi --efi-directory=/boot --removable >/dev/null
+else
+  arch-chroot "$MNT" grub-install --target=i386-pc "$disk" >/dev/null
+fi
+sed -i -e 's/^GRUB_TIMEOUT=.*/GRUB_TIMEOUT=1/' -e 's/^GRUB_DISTRIBUTOR=.*/GRUB_DISTRIBUTOR="BamboOS"/' "$MNT/etc/default/grub"
+arch-chroot "$MNT" grub-mkconfig -o /boot/grub/grub.cfg >/dev/null 2>&1
+
+sync
+umount -R "$MNT"
+trap - EXIT
+
+step "BamboOS is installed on $disk"
+echo "Remove the USB stick, then reboot. Log in as $username."
+if [[ $unattended != 1 ]] && gum confirm 'Reboot now?'; then
+  systemctl reboot
+fi

@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# bambo-shot [full]: screenshot a region (default) or the whole screen.
+# Saves to ~/Pictures and copies the image to the clipboard.
+set -euo pipefail
+
+dir="${XDG_PICTURES_DIR:-$HOME/Pictures}"
+mkdir -p "$dir"
+file="$dir/screenshot-$(date +%Y%m%d-%H%M%S).png"
+
+if [[ ${1:-region} == full ]]; then
+  grim "$file"
+else
+  # slurp exits non-zero when the selection is cancelled with Escape.
+  geometry="$(slurp -b '#10101280' -c '#5b8def' -w 1)" || exit 0
+  grim -g "$geometry" "$file"
+fi
+
+wl-copy --type image/png <"$file"
+notify-send -a BamboOS "Screenshot saved" "$file"

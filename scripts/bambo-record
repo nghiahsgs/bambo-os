@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+# bambo-record toggle|status: start or stop a screen recording with wf-recorder.
+# Recordings go to ~/Videos. `status` prints JSON for the waybar indicator.
+set -euo pipefail
+
+pidfile="${XDG_RUNTIME_DIR:-/tmp}/bambo-record.pid"
+dir="${XDG_VIDEOS_DIR:-$HOME/Videos}"
+
+is_recording() {
+  [[ -f $pidfile ]] && kill -0 "$(<"$pidfile")" 2>/dev/null
+}
+
+refresh_bar() {
+  pkill -RTMIN+8 -x waybar 2>/dev/null || true
+}
+
+case "${1:-toggle}" in
+  status)
+    if is_recording; then
+      printf '{"text":"● REC","class":"recording","tooltip":"Recording. Super + Shift + R stops it."}\n'
+    else
+      printf '{"text":"","class":"idle"}\n'
+    fi
+    ;;
+  toggle)
+    if is_recording; then
+      pid="$(<"$pidfile")"
+      kill -INT "$pid"
+      # Give wf-recorder time to finalise the file.
+      for _ in {1..50}; do
+        kill -0 "$pid" 2>/dev/null || break
+        sleep 0.1
+      done
+      rm -f "$pidfile"
+      refresh_bar
+      notify-send -a BamboOS "Recording saved" "$dir"
+    else
+      mkdir -p "$dir"
+      file="$dir/recording-$(date +%Y%m%d-%H%M%S).mp4"
+      args=(-f "$file")
+      # With several monitors wf-recorder asks which one. Pick the focused one.
+      if output="$(hyprctl activeworkspace -j 2>/dev/null | jq -er '.monitor' 2>/dev/null)"; then
+        args+=(-o "$output")
+      fi
+      setsid -f wf-recorder "${args[@]}" >/dev/null 2>&1
+      sleep 0.3
+      pgrep -n -x wf-recorder >"$pidfile" || {
+        rm -f "$pidfile"
+        notify-send -a BamboOS -u critical "Recording failed" "wf-recorder did not start."
+        exit 1
+      }
+      refresh_bar
+    fi
+    ;;
+  *)
+    echo "usage: bambo-record toggle|status" >&2
+    exit 2
+    ;;
+esac

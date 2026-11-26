@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+# bambo-agent: turn this machine into a headless box for AI coding agents.
+#
+#   bambo-agent on              no desktop on login, sshd + docker on, tmux session ready
+#   bambo-agent off             back to the Hyprland desktop on login
+#   bambo-agent status          show the current mode
+#   bambo-agent shell           attach to the long-running "agents" tmux session
+#   bambo-agent install-claude  install Claude Code into ~/.local with npm
+set -euo pipefail
+
+flag="${XDG_CONFIG_HOME:-$HOME/.config}/bambo/headless"
+session=agents
+
+[[ $EUID -ne 0 ]] || { echo "Run bambo-agent as your normal user, not root." >&2; exit 1; }
+
+ensure_session() {
+  tmux has-session -t "$session" 2>/dev/null || tmux new-session -d -s "$session" -c "$HOME"
+}
+
+case "${1:-status}" in
+  on)
+    mkdir -p "$(dirname "$flag")"
+    touch "$flag"
+    sudo systemctl enable --now sshd.service docker.socket
+    # Linger keeps the user's tmux and services alive with nobody logged in.
+    sudo loginctl enable-linger "$USER"
+    ensure_session
+    echo "Agent mode is ON. The desktop will not start on the next login."
+    echo "Reboot, or log out of Hyprland (Super + Shift + E), to free the GPU and RAM now."
+    echo "Attach with: bambo-agent shell"
+    ;;
+  off)
+    rm -f "$flag"
+    echo "Agent mode is OFF. Hyprland starts on the next tty1 login."
+    echo "sshd and docker stay enabled. Disable them with: sudo systemctl disable --now sshd docker.socket"
+    ;;
+  status)
+    if [[ -f $flag ]]; then echo "mode: headless (agent)"; else echo "mode: desktop"; fi
+    for unit in sshd.service docker.socket; do
+      printf '%s: %s\n' "$unit" "$(systemctl is-active "$unit" 2>/dev/null || true)"
+    done
+    if tmux has-session -t "$session" 2>/dev/null; then echo "tmux '$session': running"; else echo "tmux '$session': not running"; fi
+    free -m | awk '/^Mem:/ {printf "memory used: %d MB of %d MB\n", $3, $2}'
+    ;;
+  shell)
+    ensure_session
+    if [[ -n ${TMUX:-} ]]; then tmux switch-client -t "$session"; else exec tmux attach -t "$session"; fi
+    ;;
+  install-claude)
+    export NPM_CONFIG_PREFIX="$HOME/.local"
+    npm install -g @anthropic-ai/claude-code
+    echo "Installed. Run: claude"
+    ;;
+  *)
+    sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//'
+    exit 2
+    ;;
+esac

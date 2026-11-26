@@ -1,0 +1,61 @@
+// BamboOS waybar: a top bar and a floating dock.
+[
+  {
+    "name": "top",
+    "layer": "top",
+    "position": "top",
+    "height": 34,
+    "spacing": 0,
+    "modules-left": ["image#logo", "custom/brand", "hyprland/window"],
+    "modules-center": ["hyprland/workspaces"],
+    "modules-right": ["custom/install", "custom/rec", "cpu", "memory", "network", "battery", "clock"],
+
+    "image#logo": { "path": "/usr/share/bambo/tessera/logo.svg", "size": 16, "tooltip": false },
+    "custom/brand": { "format": "BamboOS", "tooltip": false, "on-click": "bambo-keys" },
+    "hyprland/workspaces": { "format": "{id}", "on-click": "activate" },
+    "hyprland/window": { "max-length": 60, "separate-outputs": true },
+
+    "custom/install": {
+      "exec": "[ -d /run/archiso ] && echo 'Install BamboOS' || true",
+      "interval": "once",
+      "on-click": "kitty -e bambo-install",
+      "tooltip": false
+    },
+    "custom/rec": {
+      "exec": "bambo-record status",
+      "return-type": "json",
+      "interval": "once",
+      "signal": 8,
+      "on-click": "bambo-record toggle"
+    },
+    "cpu": { "format": "CPU {usage}%", "interval": 5 },
+    "memory": { "format": "RAM {percentage}%", "interval": 5 },
+    "network": {
+      "format-wifi": "{essid} {signalStrength}%",
+      "format-ethernet": "wired",
+      "format-disconnected": "offline",
+      "tooltip-format": "{ifname} {ipaddr}",
+      "on-click": "kitty -e nmtui"
+    },
+    "battery": {
+      "format": "BAT {capacity}%",
+      "format-charging": "CHG {capacity}%",
+      "states": { "warning": 25, "critical": 10 }
+    },
+    "clock": { "format": "{:%a %b %d  %H:%M}", "tooltip": false }
+  },
+  {
+    "name": "dock",
+    "layer": "top",
+    "position": "bottom",
+    "width": 196,
+    "height": 60,
+    "margin-bottom": 12,
+    "spacing": 8,
+    "modules-center": ["custom/terminal", "custom/browser", "custom/record"],
+
+    "custom/terminal": { "format": "", "tooltip-format": "Terminal (Super + Enter)", "on-click": "kitty" },
+    "custom/browser": { "format": "", "tooltip-format": "Browser (Super + B)", "on-click": "chromium" },
+    "custom/record": { "format": "", "tooltip-format": "Record screen (Super + Shift + R)", "on-click": "bambo-record toggle" }
+  }
+]

@@ -1,0 +1,4 @@
+# Extra packages that only the live ISO needs. Not installed to disk.
+mkinitcpio-archiso
+syslinux
+arch-install-scripts

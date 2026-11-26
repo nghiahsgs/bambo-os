@@ -1,0 +1,36 @@
+# BamboOS prompt (Tessera)
+add_newline = false
+format = "$username[@](bold #3ecf8e)$hostname $directory$git_branch$git_status$cmd_duration$character"
+
+[username]
+show_always = true
+style_user = "bold #3ecf8e"
+style_root = "bold #ff8a4c"
+format = "[$user]($style)"
+
+[hostname]
+ssh_only = false
+style = "bold #3ecf8e"
+format = "[$hostname]($style)"
+
+[directory]
+style = "#5b8def"
+truncation_length = 3
+truncate_to_repo = true
+
+[git_branch]
+symbol = ""
+style = "#3ecf8e"
+format = "[$symbol$branch]($style) "
+
+[git_status]
+style = "#ff8a4c"
+format = "([$all_status$ahead_behind]($style) )"
+
+[cmd_duration]
+min_time = 2000
+format = "[$duration](#8e8e96) "
+
+[character]
+success_symbol = "[%](#8e8e96)"
+error_symbol = "[%](#ff8a4c)"

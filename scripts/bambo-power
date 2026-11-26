@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# bambo-power: power menu (Super + Shift + E).
+set -euo pipefail
+
+choice="$(printf 'Lock\nLogout\nReboot\nShutdown\n' |
+  rofi -dmenu -i -p "power" -theme-str 'window { width: 280px; } listview { lines: 4; }')" || exit 0
+
+case "$choice" in
+  Lock) hyprlock ;;
+  Logout)
+    if command -v hyprshutdown >/dev/null 2>&1; then
+      hyprshutdown
+    else
+      hyprctl dispatch 'hl.dsp.exit()'
+    fi
+    ;;
+  Reboot) systemctl reboot ;;
+  Shutdown) systemctl poweroff ;;
+esac

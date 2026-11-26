@@ -1,0 +1,6 @@
+# BamboOS: start the desktop on tty1. No display manager.
+# `bambo-agent on` creates the headless flag and turns this off.
+if [[ -z $WAYLAND_DISPLAY && $XDG_VTNR == 1 && ! -f ~/.config/bambo/headless ]]; then
+  start-hyprland
+  # If Hyprland exits or fails you land in this shell instead of a login loop.
+fi

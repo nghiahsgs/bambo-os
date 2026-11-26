@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# bambo-keys: show the keyboard cheat sheet. Popup under Hyprland, plain text elsewhere.
+set -euo pipefail
+
+keys="${XDG_CONFIG_HOME:-$HOME/.config}/bambo/keys.txt"
+[[ -r $keys ]] || keys=/etc/skel/.config/bambo/keys.txt
+
+if [[ -n ${WAYLAND_DISPLAY:-} && -t 1 ]] || [[ -z ${WAYLAND_DISPLAY:-} ]]; then
+  cat "$keys"
+  exit 0
+fi
+
+rofi -dmenu -i -p "keys" \
+  -theme-str 'window { width: 720px; } listview { lines: 16; } * { font: "JetBrainsMono Nerd Font 11"; }' \
+  <"$keys" >/dev/null || true

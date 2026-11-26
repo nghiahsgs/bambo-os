@@ -1,0 +1,73 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  iso:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    container:
+      image: archlinux:latest
+      options: --privileged -v /dev:/dev
+    steps:
+      - name: Install build tools
+        run: pacman -Syu --noconfirm archiso make git shellcheck lua python qemu-base
+
+      - uses: actions/checkout@v4
+
+      - name: Lint
+        run: make lint
+
+      - name: Verify Hyprland config
+        run: |
+          pacman -S --noconfirm hyprland
+          scripts/verify-hypr.sh
+
+      - name: Build ISO
+        run: scripts/build-iso.sh
+
+      - name: Report
+        run: |
+          cat out/build-report.txt
+          {
+            echo '### BamboOS build'
+            echo '```'
+            cat out/build-report.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          . out/build-report.txt
+          [ "$iso_size_mb" -le 2560 ] || { echo "ISO is larger than 2.5 GB"; exit 1; }
+
+      - name: Smoke test (boot in QEMU)
+        run: |
+          ls -l /dev/kvm || true
+          scripts/smoke-test.sh "$(ls out/bambo-os-*.iso | head -n1)"
+          {
+            echo '### Smoke test'
+            echo '```'
+            grep -a 'BAMBO_' out/smoke/serial.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload smoke output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke
+          path: out/smoke/
+          if-no-files-found: ignore
+
+      - name: Upload ISO
+        uses: actions/upload-artifact@v4
+        with:
+          name: bambo-os-iso
+          path: |
+            out/bambo-os-*.iso
+            out/bambo-os-*.iso.sha256
+            out/build-report.txt
+          retention-days: 7
+          compression-level: 0

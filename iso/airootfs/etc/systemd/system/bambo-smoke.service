@@ -1,0 +1,12 @@
+[Unit]
+Description=BamboOS live smoke markers on the serial port (used by CI)
+ConditionKernelCommandLine=archisobasedir
+ConditionPathExists=/dev/ttyS0
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/bambo-smoke
+
+[Install]
+WantedBy=multi-user.target

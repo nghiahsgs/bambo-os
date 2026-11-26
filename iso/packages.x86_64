@@ -1,0 +1,77 @@
+# BamboOS package set. This is what `bambo-install` puts on disk.
+# One package per line. The live ISO adds packages.live on top.
+
+# --- base system
+base
+linux
+linux-firmware
+sof-firmware
+intel-ucode
+amd-ucode
+mkinitcpio
+sudo
+grub
+efibootmgr
+dosfstools
+e2fsprogs
+networkmanager
+openssh
+man-db
+less
+
+# --- desktop (Hyprland, no desktop environment)
+hyprland
+hyprlock
+xdg-desktop-portal-hyprland
+swaybg
+waybar
+rofi
+mako
+libnotify
+mesa
+pipewire
+pipewire-pulse
+wireplumber
+brightnessctl
+playerctl
+xdg-user-dirs
+xdg-utils
+
+# --- fonts
+inter-font
+ttf-jetbrains-mono-nerd
+noto-fonts
+noto-fonts-emoji
+
+# --- the four tools: terminal, browser, media, capture
+kitty
+chromium
+mpv
+wf-recorder
+grim
+slurp
+wl-clipboard
+
+# --- shell and CLI
+zsh
+zsh-autosuggestions
+zsh-syntax-highlighting
+starship
+git
+curl
+wget
+tmux
+btop
+ripgrep
+fzf
+jq
+unzip
+neovim
+gum
+
+# --- agent-ready runtimes
+docker
+nodejs-lts-krypton
+npm
+python
+uv

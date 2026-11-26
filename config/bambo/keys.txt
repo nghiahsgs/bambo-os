@@ -1,0 +1,16 @@
+Super + Enter             Open terminal
+Super + B                 Open browser
+Super + Space             App launcher
+Super + Q                 Close window
+Super + F                 Fullscreen
+Super + V                 Toggle floating / tiling
+Super + 1..9              Switch workspace
+Super + Shift + 1..9      Move window to workspace
+Super + H / J / K / L     Move focus (left / down / up / right)
+Super + Shift + H/J/K/L   Swap window position
+Super + Shift + S         Screenshot a region (saved to ~/Pictures, copied)
+Print                     Screenshot the whole screen
+Super + Shift + R         Start / stop screen recording (saved to ~/Videos)
+Super + Escape            Lock screen
+Super + Shift + E         Power menu (lock, logout, reboot, shutdown)
+Super + /                 This cheat sheet

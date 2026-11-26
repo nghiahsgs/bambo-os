@@ -1,0 +1,31 @@
+# BamboOS zsh
+HISTFILE=~/.zsh_history
+HISTSIZE=50000
+SAVEHIST=50000
+setopt share_history hist_ignore_dups hist_ignore_space auto_cd interactive_comments
+
+autoload -Uz compinit && compinit
+zstyle ':completion:*' menu select
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
+bindkey -e
+
+export EDITOR=nvim
+export NPM_CONFIG_PREFIX="$HOME/.local"
+export PATH="$HOME/.local/bin:$PATH"
+
+alias ll='ls -lah --color=auto'
+alias ls='ls --color=auto'
+alias gs='git status'
+alias ..='cd ..'
+alias ...='cd ../..'
+alias update='sudo pacman -Syu'
+alias keys='bambo-keys'
+alias bambofetch='bambo-fetch'
+
+[[ -r /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh ]] &&
+  source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
+(( $+commands[fzf] )) && source <(fzf --zsh)
+(( $+commands[starship] )) && eval "$(starship init zsh)"
+# Must be sourced last.
+[[ -r /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]] &&
+  source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh

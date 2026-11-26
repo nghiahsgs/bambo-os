@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# bambo-smoke: live session only. Writes status markers to the first serial port
+# so CI can tell from outside the VM whether the desktop came up.
+# On real hardware nothing listens on the port and the writes are dropped.
+tty=/dev/ttyS0
+[[ -c $tty ]] || exit 0
+
+say() {
+  # shellcheck disable=SC2016
+  timeout 2 bash -c 'printf "%s\r\n" "$1" >"$2"' _ "$*" "$tty" 2>/dev/null || true
+}
+
+say "BAMBO_LIVE_READY"
+say "BAMBO_PKGS=$(pacman -Qq | wc -l)"
+
+for _ in {1..120}; do
+  pgrep -xi hyprland >/dev/null && break
+  sleep 1
+done
+
+if pgrep -xi hyprland >/dev/null; then
+  say "BAMBO_DESKTOP_READY"
+else
+  say "BAMBO_DESKTOP_FAILED"
+  while IFS= read -r line; do say "LOG: $line"; done < <(
+    tail -n 40 /run/user/1000/hypr/*/hyprland.log 2>/dev/null
+    journalctl -b --no-pager -n 30 2>/dev/null
+  )
+fi
+
+sleep 30
+say "BAMBO_MEM_USED_MB=$(free -m | awk '/^Mem:/ {print $3}')"
+say "BAMBO_WAYBAR=$(pgrep -x waybar >/dev/null && echo up || echo down)"
+say "BAMBO_SMOKE_DONE"

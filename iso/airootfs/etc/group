@@ -1,0 +1,5 @@
+root:x:0:root
+adm:x:4:bambo
+wheel:x:10:bambo
+uucp:x:14:bambo
+bambo:x:1000:

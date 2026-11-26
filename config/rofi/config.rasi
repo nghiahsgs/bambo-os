@@ -1,0 +1,44 @@
+/* BamboOS launcher (Tessera) */
+configuration {
+    modi: "drun,run";
+    show-icons: false;
+    font: "Inter 12";
+    drun-display-format: "{name}";
+    display-drun: ">";
+    display-run: "$";
+}
+
+* {
+    bg:        #101012;
+    surface:   #161618;
+    hairline:  #ffffff14;
+    fg:        #f4f4f5;
+    muted:     #8e8e96;
+    accent:    #5b8def;
+    background-color: transparent;
+    text-color: @fg;
+}
+
+window {
+    width: 560px;
+    background-color: @bg;
+    border: 1px;
+    border-color: @hairline;
+    border-radius: 12px;
+    padding: 12px;
+}
+mainbox { spacing: 10px; }
+inputbar {
+    children: [ prompt, entry ];
+    spacing: 10px;
+    padding: 10px 12px;
+    background-color: @surface;
+    border-radius: 8px;
+}
+prompt { text-color: @accent; }
+entry { placeholder: "Search"; placeholder-color: @muted; }
+listview { lines: 8; scrollbar: false; fixed-height: false; }
+element { padding: 8px 12px; border-radius: 8px; }
+element selected { background-color: @surface; }
+element-text { text-color: @muted; }
+element-text selected { text-color: @accent; }

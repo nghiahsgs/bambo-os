@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# bambo-fetch (alias: bambofetch): a tiny system card in Tessera colours.
+set -euo pipefail
+
+b=$'\e[38;2;91;141;239m' o=$'\e[38;2;255;138;76m' g=$'\e[38;2;62;207;142m'
+w=$'\e[38;2;244;244;245m' m=$'\e[38;2;142;142;150m' r=$'\e[0m'
+
+kernel="$(uname -r)"
+shell="$(basename "${SHELL:-sh}")"
+pkgs="$(pacman -Qq 2>/dev/null | wc -l || echo '?')"
+mem="$(free -m 2>/dev/null | awk '/^Mem:/ {printf "%d / %d MB", $3, $2}' || true)"
+wm="${XDG_CURRENT_DESKTOP:-tty}"
+
+printf '\n'
+printf '  %s██%s %s██%s   %s%s@%s%s\n' "$b" "$r" "$o" "$r" "$w" "${USER:-user}" "$(uname -n)" "$r"
+printf '  %s██%s %s██%s   %s────────────────%s\n' "$g" "$r" "$w" "$r" "$m" "$r"
+printf '          %sOS:%s     BamboOS (Arch Linux)\n' "$m" "$r"
+printf '          %sKernel:%s %s\n' "$m" "$r" "$kernel"
+printf '          %sWM:%s     %s\n' "$m" "$r" "$wm"
+printf '          %sShell:%s  %s\n' "$m" "$r" "$shell"
+printf '          %sPkgs:%s   %s\n' "$m" "$r" "$pkgs"
+printf '          %sMemory:%s %s\n' "$m" "$r" "$mem"
+printf '          %sTools:%s  terminal · browser · mpv · recorder\n\n' "$m" "$r"

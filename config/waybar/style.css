@@ -1,0 +1,78 @@
+/* BamboOS waybar (Tessera) */
+* {
+  font-family: "Inter", "JetBrainsMono Nerd Font", sans-serif;
+  font-size: 13px;
+  border: none;
+  border-radius: 0;
+  min-height: 0;
+}
+
+window#waybar {
+  background: #101012;
+  color: #f4f4f5;
+}
+
+/* ---- top bar ---- */
+window#waybar.top { border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+
+#image { margin: 0 8px 0 14px; }
+#custom-brand { font-weight: 700; color: #f4f4f5; padding-right: 14px; }
+#window { color: #8e8e96; }
+
+#workspaces button {
+  padding: 0 10px;
+  color: #8e8e96;
+  background: transparent;
+}
+#workspaces button.active { color: #5b8def; }
+#workspaces button.urgent { color: #ff8a4c; }
+#workspaces button:hover { background: #161618; box-shadow: none; text-shadow: none; }
+
+#cpu, #memory, #network, #battery, #clock, #custom-rec {
+  padding: 0 10px;
+  color: #8e8e96;
+}
+#clock { color: #f4f4f5; font-weight: 600; padding-right: 16px; }
+#network.disconnected { color: #ff8a4c; }
+#battery.warning { color: #ff8a4c; }
+#battery.critical { color: #f0616d; }
+#battery.charging { color: #3ecf8e; }
+
+#custom-install {
+  color: #101012;
+  background: #f4f4f5;
+  border-radius: 8px;
+  margin: 5px 8px;
+  padding: 0 12px;
+  font-weight: 600;
+}
+
+@keyframes rec-blink {
+  from { opacity: 1; }
+  to { opacity: 0.25; }
+}
+#custom-rec.recording {
+  color: #f0616d;
+  font-weight: 600;
+  animation: rec-blink 0.8s ease-in-out infinite alternate;
+}
+
+/* ---- dock ---- */
+window#waybar.dock {
+  background: #161618;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+}
+#custom-terminal, #custom-browser, #custom-record {
+  font-family: "JetBrainsMono Nerd Font";
+  font-size: 20px;
+  min-width: 44px;
+  margin: 8px 0;
+  background: #101012;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+}
+#custom-terminal { color: #3ecf8e; }
+#custom-browser { color: #5b8def; }
+#custom-record { color: #ff8a4c; }
+#custom-terminal:hover, #custom-browser:hover, #custom-record:hover { background: #1c1c1f; }
