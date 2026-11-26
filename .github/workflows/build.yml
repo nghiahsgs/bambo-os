@@ -15,7 +15,7 @@ jobs:
       options: --privileged -v /dev:/dev
     steps:
       - name: Install build tools
-        run: pacman -Syu --noconfirm archiso make git shellcheck lua python qemu-base
+        run: pacman -Syu --noconfirm archiso make git shellcheck lua python qemu-base qemu-hw-display-virtio-vga qemu-hw-display-virtio-gpu
 
       - uses: actions/checkout@v4
 
@@ -42,6 +42,17 @@ jobs:
           . out/build-report.txt
           [ "$iso_size_mb" -le 2560 ] || { echo "ISO is larger than 2.5 GB"; exit 1; }
 
+      - name: Upload ISO
+        uses: actions/upload-artifact@v4
+        with:
+          name: bambo-os-iso
+          path: |
+            out/bambo-os-*.iso
+            out/bambo-os-*.iso.sha256
+            out/build-report.txt
+          retention-days: 7
+          compression-level: 0
+
       - name: Smoke test (boot in QEMU)
         run: |
           ls -l /dev/kvm || true
@@ -60,14 +71,3 @@ jobs:
           name: smoke
           path: out/smoke/
           if-no-files-found: ignore
-
-      - name: Upload ISO
-        uses: actions/upload-artifact@v4
-        with:
-          name: bambo-os-iso
-          path: |
-            out/bambo-os-*.iso
-            out/bambo-os-*.iso.sha256
-            out/build-report.txt
-          retention-days: 7
-          compression-level: 0
