@@ -5,7 +5,8 @@
 #   scripts/build-iso.sh            build out/bambo-os-<date>-x86_64.iso
 #   scripts/build-iso.sh assemble   only assemble the profile (no root needed)
 #
-# Env: BAMBO_BUILD_DIR (default /var/tmp/bambo-build), BAMBO_OUT_DIR (default ./out),
+# Env: BAMBO_SMOKE=1 (include the CI test service, never for release ISOs),
+#      BAMBO_BUILD_DIR (default /var/tmp/bambo-build), BAMBO_OUT_DIR (default ./out),
 #      BAMBO_DISABLE_SANDBOX=1 (needed when pacman runs under CPU emulation).
 set -euo pipefail
 
@@ -43,6 +44,15 @@ mkdir -p "$bin" "$share/tessera" "$profile/airootfs/usr/share/applications"
 for tool in "$repo"/scripts/bambo-*; do
   install -m 755 "$tool" "$bin/"
 done
+
+# bambo-smoke is test instrumentation (see scripts/smoke-test.sh). It is only
+# built into the ISO when BAMBO_SMOKE=1. Release ISOs do not contain it.
+if [[ ${BAMBO_SMOKE:-0} != 1 ]]; then
+  rm -f "$bin/bambo-smoke" \
+    "$profile/airootfs/etc/systemd/system/bambo-smoke.service" \
+    "$profile/airootfs/etc/systemd/system/multi-user.target.wants/bambo-smoke.service"
+  sed -i '/bambo-smoke/d' "$profile/profiledef.sh"
+fi
 cp "$repo/themes/tessera/wallpaper.png" "$repo/themes/tessera/logo.svg" "$share/tessera/"
 cp "$repo/iso/packages.x86_64" "$share/packages.x86_64"
 cat >"$profile/airootfs/usr/share/applications/bambo-install.desktop" <<'DESKTOP'
@@ -78,5 +88,6 @@ size_mb="$(($(stat -c %s "$iso") / 1024 / 1024))"
   echo "iso=$(basename "$iso")"
   echo "iso_size_mb=$size_mb"
   echo "live_packages=$pkgs"
+  echo "smoke_service=$([[ ${BAMBO_SMOKE:-0} == 1 ]] && echo included || echo excluded)"
 } | tee "$out/build-report.txt"
 rm -rf "$work"

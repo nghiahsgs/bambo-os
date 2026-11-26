@@ -102,6 +102,8 @@ No desktop on the next login, `sshd` and Docker enabled, a long-running tmux ses
 
 Checked by CI on every push, against current Arch (see the Actions tab):
 
+CI builds two images: the release ISO, and a test ISO that is the same plus a small reporting service (`bambo-smoke`). The boot and install checks below run on the test ISO.
+
 - Shell scripts pass `shellcheck`, Lua passes `luac`, Hyprland itself accepts the config (`Hyprland --verify-config`)
 - The ISO builds. Last measured: 2.2 GB (target 2.5 GB or less)
 - The ISO boots in QEMU (BIOS) to the Hyprland desktop with waybar running

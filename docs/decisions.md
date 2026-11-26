@@ -28,7 +28,7 @@ Short record of choices made while implementing the PRD ([PRD.md](PRD.md)), with
 
 ## Before going public
 
-- The live ISO ships `bambo-smoke`, a root service used by CI. When the VM carries the SMBIOS OEM string `bambo-smoke-install` it runs an unattended install on `/dev/vda`. Real hardware does not carry that string, but a public release should build without this service.
+- Done: release ISOs no longer contain `bambo-smoke`, the root service CI uses to report from inside the VM and to run an unattended install. `make iso` leaves it out. Only `make iso-test` (`BAMBO_SMOKE=1`) includes it, and CI tests that second image. The two images differ by that service only.
 - CI covers BIOS boot only. Test UEFI boot and a real laptop first.
 
 ## Risks

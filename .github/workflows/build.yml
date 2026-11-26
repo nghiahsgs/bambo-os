@@ -27,8 +27,12 @@ jobs:
           pacman -S --noconfirm hyprland
           scripts/verify-hypr.sh
 
-      - name: Build ISO
-        run: scripts/build-iso.sh
+      - name: Build release ISO
+        run: |
+          scripts/build-iso.sh
+          # The release image must not carry the CI test service.
+          ! find /var/tmp/bambo-build/profile -name 'bambo-smoke*' | grep .
+          ! grep -q bambo-smoke /var/tmp/bambo-build/profile/profiledef.sh
 
       - name: Report
         run: |
@@ -53,9 +57,12 @@ jobs:
           retention-days: 7
           compression-level: 0
 
+      - name: Build test ISO (release + bambo-smoke service)
+        run: BAMBO_SMOKE=1 BAMBO_OUT_DIR="$PWD/out/test" scripts/build-iso.sh
+
       - name: Smoke test (boot the live ISO in QEMU)
         run: |
-          scripts/smoke-test.sh "$(ls out/bambo-os-*.iso | head -n1)" live
+          scripts/smoke-test.sh "$(ls out/test/bambo-os-*.iso | head -n1)" live
           {
             echo '### Live session'
             echo '```'
@@ -65,7 +72,7 @@ jobs:
 
       - name: Install test (bambo-install on a blank disk, then boot it)
         run: |
-          scripts/smoke-test.sh "$(ls out/bambo-os-*.iso | head -n1)" install
+          scripts/smoke-test.sh "$(ls out/test/bambo-os-*.iso | head -n1)" install
           {
             echo '### Install'
             echo '```'

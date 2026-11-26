@@ -2,7 +2,8 @@
 #   make iso       build out/bambo-os-<date>-x86_64.iso (native on Arch, Docker elsewhere)
 #   make lint      shellcheck + bash -n + Lua syntax + JSON checks
 #   make test-vm   boot the newest ISO in QEMU with a window
-#   make smoke     headless QEMU tests: live session, then bambo-install on a blank disk
+#   make iso-test  build out/test/*.iso with the bambo-smoke test service included
+#   make smoke     headless QEMU tests on the test ISO: live session, then bambo-install
 #   make wallpaper regenerate themes/tessera/wallpaper.png
 #   make clean
 
@@ -12,19 +13,27 @@ IS_ARCH := $(shell command -v mkarchiso >/dev/null 2>&1 && echo yes)
 HOST_ARCH := $(shell uname -m)
 SCRIPTS := $(wildcard scripts/bambo-*) $(wildcard scripts/*.sh)
 
-.PHONY: iso lint test-vm smoke wallpaper clean
+.PHONY: iso iso-test lint test-vm smoke wallpaper clean
+
+TEST_ISO = $(shell ls -t out/test/bambo-os-*.iso 2>/dev/null | head -n1)
+SMOKE ?= 0
+OUT ?= out
 
 iso:
 ifeq ($(IS_ARCH),yes)
-	sudo scripts/build-iso.sh
+	sudo BAMBO_SMOKE=$(SMOKE) BAMBO_OUT_DIR="$(CURDIR)/$(OUT)" scripts/build-iso.sh
 else
 	docker run --rm --privileged --platform linux/amd64 \
 		-v "$(CURDIR)":/src -w /src \
+		-e BAMBO_SMOKE=$(SMOKE) -e BAMBO_OUT_DIR=/src/$(OUT) \
 		-e BAMBO_DISABLE_SANDBOX=$(if $(filter x86_64,$(HOST_ARCH)),0,1) \
 		archlinux:latest bash -c '\
 			pacman -Syu --noconfirm $(if $(filter x86_64,$(HOST_ARCH)),,--disable-sandbox) archiso && \
 			scripts/build-iso.sh'
 endif
+
+iso-test:
+	$(MAKE) iso SMOKE=1 OUT=out/test
 
 lint:
 	@for f in $(SCRIPTS); do bash -n "$$f" || exit 1; done; echo "bash -n: ok"
@@ -48,9 +57,9 @@ out/test-disk.qcow2:
 test-vm: out/test-disk.qcow2
 
 smoke:
-	@[ -n "$(ISO)" ] || { echo "No ISO in out/. Run: make iso"; exit 1; }
-	scripts/smoke-test.sh "$(ISO)" live
-	scripts/smoke-test.sh "$(ISO)" install
+	@[ -n "$(TEST_ISO)" ] || { echo "No test ISO in out/test/. Run: make iso-test"; exit 1; }
+	scripts/smoke-test.sh "$(TEST_ISO)" live
+	scripts/smoke-test.sh "$(TEST_ISO)" install
 
 wallpaper:
 	python3 themes/tessera/make-wallpaper.py themes/tessera/wallpaper.png
