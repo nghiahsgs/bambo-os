@@ -44,6 +44,24 @@ make test-vm
 
 This attaches a 32 GB virtual disk, so you can also test `bambo-install`.
 
+macOS on Apple Silicon (x86 emulation, slow: about 9 minutes to the desktop on an M5):
+
+```bash
+brew install qemu
+```
+
+```bash
+qemu-system-x86_64 -accel tcg,thread=multi -cpu max -smp 4 -m 4096 -vga none -device virtio-vga -display cocoa,zoom-to-fit=off -device qemu-xhci -device usb-tablet -cdrom out/bambo-os-*.iso -boot d
+```
+
+QEMU on macOS tells the guest to use the size of its window at start, 720x400. Once the desktop is up, open a terminal (`Super + Enter`) and set a real resolution:
+
+```bash
+hyprctl eval "hl.monitor{output='',mode='1280x800',position='auto',scale=1}"
+```
+
+Click inside the window so it grabs the keyboard, then the Command key is `Super`. `Ctrl + Option + G` releases the grab.
+
 Other hypervisors: give the VM at least 4 GB RAM and enable 3D acceleration. Hyprland needs working OpenGL. Without acceleration it falls back to software rendering, which is slow.
 
 ## Install to disk

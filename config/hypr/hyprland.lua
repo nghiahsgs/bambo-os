@@ -17,6 +17,17 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("mako")
     hl.exec_cmd("xdg-user-dirs-update")
     hl.exec_cmd("notify-send -a BamboOS 'Welcome to BamboOS' 'Super + / shows every shortcut.'")
+
+    -- "auto" scale trusts the physical size the display reports. Some VMs report
+    -- a tiny one, and a small mode then gets scaled 2x into an unusable desktop.
+    -- If the scaled desktop would be narrower than 1100 px, fall back to scale 1.
+    pcall(function()
+        for _, m in ipairs(hl.get_monitors()) do
+            if m.scale > 1 and (m.width / m.scale) < 1100 then
+                hl.monitor({ output = m.name, mode = "preferred", position = "auto", scale = 1 })
+            end
+        end
+    end)
 end)
 
 ---- Look and feel ----

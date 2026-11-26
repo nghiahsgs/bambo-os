@@ -26,6 +26,8 @@ Short record of choices made while implementing the PRD ([PRD.md](PRD.md)), with
 - **Fonts.** A fontconfig file makes Inter the default sans font and JetBrains Mono the default monospace font for every app.
 - **`docs/PRD.md` is a cleaned-up copy** of the original PRD, not a byte-for-byte one.
 
+- **Scale guard.** Monitor scale is `auto`, which is right for HiDPI laptops. QEMU on macOS reports a tiny physical display, and `auto` then doubled a 720x400 mode into an unusable desktop (found on the first local run). The start hook now falls back to scale 1 when the scaled desktop would be narrower than 1100 px.
+
 ## Before going public
 
 - Done: release ISOs no longer contain `bambo-smoke`, the root service CI uses to report from inside the VM and to run an unattended install. `make iso` leaves it out. Only `make iso-test` (`BAMBO_SMOKE=1`) includes it, and CI tests that second image. The two images differ by that service only.
