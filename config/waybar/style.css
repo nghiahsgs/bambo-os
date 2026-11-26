@@ -58,10 +58,12 @@ window#waybar.top { border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
 }
 
 /* ---- dock ---- */
-window#waybar.dock {
+window#waybar.dock { background: transparent; }
+window#waybar.dock .modules-center {
   background: #161618;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 18px;
+  padding: 0 8px;
 }
 #custom-terminal, #custom-browser, #custom-record {
   font-family: "JetBrainsMono Nerd Font";

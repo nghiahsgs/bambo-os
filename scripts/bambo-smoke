@@ -31,4 +31,35 @@ fi
 sleep 30
 say "BAMBO_MEM_USED_MB=$(free -m | awk '/^Mem:/ {print $3}')"
 say "BAMBO_WAYBAR=$(pgrep -x waybar >/dev/null && echo up || echo down)"
+
+# Full exercise: only when the VM was started with the SMBIOS OEM string
+# "bambo-smoke-full" (scripts/smoke-test.sh does that). Never on real hardware.
+if grep -qa bambo-smoke-full /sys/firmware/dmi/entries/11-0/raw 2>/dev/null; then
+  run=/run/user/1000
+  wl="$(find "$run" -maxdepth 1 -name 'wayland-*' ! -name '*.lock' -printf '%f\n' | head -n1)"
+  as_user() {
+    runuser -u bambo -- env HOME=/home/bambo XDG_RUNTIME_DIR="$run" WAYLAND_DISPLAY="$wl" \
+      PATH=/usr/local/bin:/usr/bin "$@" >/dev/null 2>&1
+  }
+
+  as_user hyprctl -i 0 dispatch 'hl.dsp.exec_cmd("kitty --hold bambo-fetch")'
+  sleep 10
+  say "BAMBO_TERMINAL=$(pgrep -x kitty >/dev/null && echo up || echo down)"
+  sleep 4 # the host takes a screenshot on the marker above
+
+  as_user bambo-shot full
+  shot="$(find /home/bambo/Pictures -name 'screenshot-*.png' -size +1k 2>/dev/null | head -n1)"
+  say "BAMBO_SCREENSHOT=$([[ -n $shot ]] && echo ok || echo missing)"
+
+  as_user bambo-record toggle
+  sleep 5
+  as_user bambo-record toggle
+  sleep 1
+  rec="$(find /home/bambo/Videos -name 'recording-*.mp4' -size +1k 2>/dev/null | head -n1)"
+  say "BAMBO_RECORDING=$([[ -n $rec ]] && echo ok || echo missing)"
+
+  as_user hyprctl -i 0 dispatch 'hl.dsp.exec_cmd("chromium")'
+  sleep 25
+  say "BAMBO_BROWSER=$(pgrep -x chromium >/dev/null && echo up || echo down)"
+fi
 say "BAMBO_SMOKE_DONE"
