@@ -12,6 +12,8 @@ repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 command -v swiftc >/dev/null 2>&1 || { echo "build-app: swiftc not found. Run: xcode-select --install" >&2; exit 1; }
 
 app="$repo/out/Try BamboOS.app"
+# A running copy would keep showing the old build.
+pkill -x TryBamboOS 2>/dev/null && sleep 0.5 || true
 rm -rf "$app"
 mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
 

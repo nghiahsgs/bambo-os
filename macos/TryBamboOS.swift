@@ -472,8 +472,20 @@ struct ContentView: View {
 
 // MARK: - App
 
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    // One window is the whole app: closing it quits, so opening the app again
+    // always shows the window. A running VM is not affected.
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        NSApp.activate(ignoringOtherApps: true)
+    }
+}
+
 @main
 struct TryBamboOSApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
+
     var body: some Scene {
         Window("Try BamboOS", id: "main") {
             ContentView()
