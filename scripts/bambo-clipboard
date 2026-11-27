@@ -3,8 +3,10 @@
 
 `make try` adds a virtio port named org.bambo.clipboard and runs
 scripts/clipboard-host.py on the Mac. Each side sends one line per clipboard
-change: the text as base64. Text only, 1 MiB at most. On a real machine the
-port does not exist and this exits at once.
+change: the text as base64, 1 MiB at most. A PNG image, such as a screenshot,
+goes from here to the host as "img:" plus base64, 8 MiB at most. Images do not
+come the other way. On a real machine the port does not exist and this exits
+at once.
 
 The idea (a guest agent on a virtio port, wl-clipboard on this end) comes from
 Try Omarchy (github.com/omacom/try-omarchy, MIT).
@@ -19,6 +21,7 @@ import time
 
 PORT = "/dev/virtio-ports/org.bambo.clipboard"
 MAX_BYTES = 1024 * 1024
+MAX_IMAGE_BYTES = 8 * 1024 * 1024
 last = None
 lock = threading.Lock()
 
@@ -29,6 +32,22 @@ def read_clipboard():
         if got.returncode == 0:
             return got.stdout
     return None
+
+
+def read_image():
+    """The clipboard as PNG bytes, or None when it holds no PNG."""
+    types = subprocess.run(["wl-paste", "--list-types"], capture_output=True).stdout.split()
+    if b"image/png" not in types:
+        return None
+    got = subprocess.run(["wl-paste", "--type", "image/png"], capture_output=True)
+    return got.stdout if got.returncode == 0 else None
+
+
+def send(port, data):
+    """Write all of data. The port is unbuffered, so one write may be short."""
+    view = memoryview(data)
+    while view:
+        view = view[port.write(view):]
 
 
 def note_incoming(text):
@@ -75,13 +94,20 @@ def main():
     watch = subprocess.Popen(["wl-paste", "--watch", "echo", "changed"], stdout=subprocess.PIPE)
     for _ in watch.stdout:
         text = read_clipboard()
-        if not text or len(text) > MAX_BYTES:
+        if not text:
+            image = read_image()
+            # No echo check: images never come back from the host, and the
+            # same picture copied twice must reach the host twice.
+            if image and len(image) <= MAX_IMAGE_BYTES:
+                send(port, b"img:" + base64.b64encode(image) + b"\n")
+            continue
+        if len(text) > MAX_BYTES:
             continue
         with lock:
             if text == last:
                 continue
             last = text
-        port.write(base64.b64encode(text) + b"\n")
+        send(port, base64.b64encode(text) + b"\n")
     return 1
 
 

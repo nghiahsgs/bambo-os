@@ -70,7 +70,7 @@ make try
 - Graphics are software-rendered. Stock QEMU on macOS has no GPU acceleration for Linux guests.
 - Command is `Super` inside the VM.
 - Selecting text in the terminal copies it, and a short "Copied" note confirms every copy made inside BamboOS.
-- Copy and paste cross between the VM and macOS (text only, up to 1 MiB). Whatever you copy on the Mac while the VM runs is sent into the VM, passwords included. `BAMBO_CLIPBOARD=0 make try` turns it off.
+- Copy and paste cross between the VM and macOS (text, up to 1 MiB). A picture copied in the VM, a screenshot for example, also lands on the Mac clipboard (PNG, up to 8 MiB). Pictures do not go from the Mac into the VM. Whatever you copy on the Mac while the VM runs is sent into the VM, passwords included. `BAMBO_CLIPBOARD=0 make try` turns it off.
 - Sound plays through the Mac's output device. There is no microphone in the VM.
 - If `Cmd + Space` opens Spotlight instead of the launcher, use `Cmd + R` or the search icon in the dock. macOS keeps `Cmd + Space` and `Cmd + Tab` for itself unless the app that starts QEMU (Terminal, for example) has the Accessibility permission in System Settings, Privacy & Security.
 - Leave: `Ctrl + Option + G` releases the keyboard, then `Cmd + Q` quits. `Cmd + F` leaves full screen.
