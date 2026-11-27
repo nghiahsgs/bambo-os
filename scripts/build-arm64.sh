@@ -130,6 +130,14 @@ done
 arch-chroot "$target" userdel -r alarm >/dev/null 2>&1 || true
 arch-chroot "$target" useradd -m -u "${BAMBO_UID:-1000}" -G wheel,docker -s /usr/bin/zsh bambo
 arch-chroot "$target" passwd -d bambo >/dev/null
+# systemd treats a uid below 1000 as a system account and gives its logins a
+# "user-light" session: no user service manager, so no session bus, no mako and
+# no PipeWire. A Mac user is uid 501, so ask for a full session by name.
+if (( ${BAMBO_UID:-1000} < 1000 )); then
+  sed -i -E 's/^(-?session[[:space:]]+optional[[:space:]]+pam_systemd\.so).*/\1 class=user/' "$target/etc/pam.d/system-login"
+  grep -q 'pam_systemd.so class=user' "$target/etc/pam.d/system-login" ||
+    echo "warning: could not set the session class. Notifications and sound may not work."
+fi
 arch-chroot "$target" passwd -l root >/dev/null
 install -m 440 /dev/stdin "$target/etc/sudoers.d/10-wheel" <<'SUDO'
 %wheel ALL=(ALL:ALL) NOPASSWD: ALL

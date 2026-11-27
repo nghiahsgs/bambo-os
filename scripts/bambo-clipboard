@@ -10,6 +10,7 @@ The idea (a guest agent on a virtio port, wl-clipboard on this end) comes from
 Try Omarchy (github.com/omacom/try-omarchy, MIT).
 """
 import base64
+import hashlib
 import os
 import subprocess
 import sys
@@ -30,6 +31,18 @@ def read_clipboard():
     return None
 
 
+def note_incoming(text):
+    """Tell bambo-copied which text came from the host, so it stays quiet about it."""
+    runtime = os.environ.get("XDG_RUNTIME_DIR", "/tmp")
+    # Same form bambo-copied hashes: a shell $(...) drops trailing newlines.
+    digest = hashlib.sha256(text.rstrip(b"\n")).hexdigest()
+    try:
+        with open(os.path.join(runtime, "bambo-clipboard.in"), "w") as f:
+            f.write(digest + "\n")
+    except OSError:
+        pass
+
+
 def from_host(port):
     """Host lines become the Wayland clipboard."""
     global last
@@ -42,6 +55,7 @@ def from_host(port):
             continue
         with lock:
             last = text
+        note_incoming(text)
         subprocess.run(["wl-copy", "--type", "text/plain;charset=utf-8"], input=text)
 
 

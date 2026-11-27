@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# bambo-copied: say "Copied" when something lands on the clipboard.
+#
+# Started by Hyprland as: wl-paste --type text --watch bambo-copied
+# wl-paste runs it once per clipboard change with the new text on stdin.
+# Text that came in from the host (bambo-clipboard) is not announced: copying
+# on the Mac should not pop up a note inside the VM.
+set -euo pipefail
+
+text="$(cat)"
+[[ -n $text ]] || exit 0
+
+seen="${XDG_RUNTIME_DIR:-/tmp}/bambo-clipboard.in"
+sum="$(printf '%s' "$text" | sha256sum | cut -d' ' -f1)"
+[[ $(cat "$seen" 2>/dev/null) != "$sum" ]] || exit 0
+
+# First line, shortened. mako reads the body as markup, so escape it.
+line="${text%%$'\n'*}"
+((${#line} <= 60)) || line="${line:0:60}..."
+line="${line//&/&amp;}"
+line="${line//</&lt;}"
+line="${line//>/&gt;}"
+
+# The hint makes a new note replace the previous one instead of stacking.
+notify-send -a BamboOS -t 1500 -h string:x-canonical-private-synchronous:bambo-copied \
+  "Copied" "$line" 2>/dev/null || true
