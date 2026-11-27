@@ -60,9 +60,9 @@ make arm64
 make try
 ```
 
-- `make arm64` needs Docker. It builds `out/bambo-os-<date>-aarch64.qcow2` (about 1.5 GB) from the Arch Linux ARM repositories with the same package list and dotfiles as the ISO.
+- `make arm64` needs Docker. It builds `out/bambo-os-<date>-aarch64.qcow2` (about 1.9 GB) from the Arch Linux ARM repositories with the same package list and dotfiles as the ISO.
 - The image is an installed system, not a live medium. User `bambo`, empty password, `sudo` without a prompt. There is no `bambo-install` in it.
-- `make try` opens it full screen. The guest gets one mode with the shape of your main display (1512x982 on a 14 inch MacBook Pro) and QEMU stretches it over the screen. Settings: `BAMBO_RES=1280x800`, `BAMBO_WINDOWED=1`, `BAMBO_MEM`, `BAMBO_CPUS`.
+- `make try` opens it full screen. The arm64 guest gets one mode with the pixel size of your main display (3024x1964 on a 14 inch MacBook Pro) and BamboOS scales it 2x, so text is sharp. Drawing is done by the CPU, so if it feels slow, halve it with `BAMBO_RES=1512x982`. Other settings: `BAMBO_WINDOWED=1`, `BAMBO_MEM`, `BAMBO_CPUS`.
 - Your changes live in `out/try-arm64.qcow2`. Delete it to start clean. Rebuilding the image also resets it.
 - Graphics are software-rendered. Stock QEMU on macOS has no GPU acceleration for Linux guests.
 - Command is `Super` inside the VM.

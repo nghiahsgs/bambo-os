@@ -15,7 +15,10 @@
 # stretches it over the whole screen.
 #
 # Settings (environment):
-#   BAMBO_RES=1512x982    guest resolution (default: main display in points)
+#   BAMBO_RES=1512x982    guest resolution. Default on a Mac: the main display in
+#                         pixels for the arm64 image (sharp on Retina, BamboOS
+#                         scales 2x), in points for the emulated x86 ISO (4x fewer
+#                         pixels to draw). Set it to the point size if arm64 lags.
 #   BAMBO_WINDOWED=1      start in a window instead of full screen
 #   BAMBO_MEM=4096        RAM in MiB
 #   BAMBO_CPUS=4
@@ -40,13 +43,14 @@ if [[ $media == *.qcow2 ]]; then arch=aarch64; else arch=x86_64; fi
 qemu="qemu-system-$arch"
 command -v "$qemu" >/dev/null 2>&1 || { echo "try-bambo: $qemu not found (macOS: brew install qemu)." >&2; exit 1; }
 
-# Main display size in points: "3024 x 1964 Retina" -> 1512x982.
+# Main display size: "3024 x 1964 Retina" -> 1512x982 in points, or with
+# "pixels" as the argument the full 3024x1964.
 host_res() {
   local line w h
   line="$(system_profiler SPDisplaysDataType 2>/dev/null | grep -m1 'Resolution:' || true)"
   if [[ $line =~ ([0-9]+)\ x\ ([0-9]+) ]]; then
     w="${BASH_REMATCH[1]}" h="${BASH_REMATCH[2]}"
-    if [[ $line == *Retina* ]]; then w=$((w / 2)) h=$((h / 2)); fi
+    if [[ $line == *Retina* && ${1:-points} != pixels ]]; then w=$((w / 2)) h=$((h / 2)); fi
     echo "$((w / 8 * 8))x$((h / 2 * 2))"
   else
     echo 1280x800
@@ -55,7 +59,9 @@ host_res() {
 
 res="${BAMBO_RES:-}"
 if [[ -z $res ]]; then
-  if [[ $os == Darwin ]]; then res="$(host_res)"; else res=1920x1080; fi
+  if [[ $os == Darwin && $arch == aarch64 ]]; then res="$(host_res pixels)"
+  elif [[ $os == Darwin ]]; then res="$(host_res)"
+  else res=1920x1080; fi
 fi
 [[ $res =~ ^([0-9]+)x([0-9]+)$ ]] || { echo "try-bambo: BAMBO_RES must look like 1512x982." >&2; exit 1; }
 xres="${BASH_REMATCH[1]}" yres="${BASH_REMATCH[2]}"

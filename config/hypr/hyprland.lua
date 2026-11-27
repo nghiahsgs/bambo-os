@@ -25,6 +25,11 @@ hl.on("hyprland.start", function()
         for _, m in ipairs(hl.get_monitors()) do
             if m.scale > 1 and (m.width / m.scale) < 1100 then
                 hl.monitor({ output = m.name, mode = "preferred", position = "auto", scale = 1 })
+            elseif m.scale == 1 and m.width >= 2880 and tostring(m.description):find("QEMU") then
+                -- A QEMU display this wide is a HiDPI host screen passed through at
+                -- its pixel size (make try on a Retina Mac). QEMU reports a fixed
+                -- physical size, so "auto" stays at 1 and everything is tiny.
+                hl.monitor({ output = m.name, mode = "preferred", position = "auto", scale = 2 })
             end
         end
     end)
