@@ -36,6 +36,29 @@ hl.on("hyprland.start", function()
     end)
 end)
 
+---- Virtual machines ----
+-- In a VM the compositor hands the pointer image to the hypervisor's window to
+-- draw. QEMU's macOS window loses it now and then and the pointer vanishes.
+-- Drawing the pointer into the picture ourselves is always visible.
+-- Hyprland cannot wait for child processes here, so read the firmware's
+-- machine description instead of asking systemd-detect-virt.
+local function in_vm()
+    for _, name in ipairs({ "sys_vendor", "product_name" }) do
+        local f = io.open("/sys/class/dmi/id/" .. name)
+        if f then
+            local id = (f:read("*l") or ""):lower()
+            f:close()
+            for _, vm in ipairs({ "qemu", "kvm", "vmware", "virtualbox", "innotek", "parallels", "virtual machine", "apple virtualization", "utm" }) do
+                if id:find(vm, 1, true) then return true end
+            end
+        end
+    end
+    return false
+end
+if in_vm() then
+    hl.config({ cursor = { no_hardware_cursors = 1 } })
+end
+
 ---- Look and feel ----
 hl.config({
     general = {
