@@ -124,7 +124,7 @@ CI builds two images: the release ISO, and a test ISO that is the same plus a sm
 
 Checked by hand on one machine (MacBook Pro M5, QEMU 11.1 with HVF), not by CI:
 
-- `make arm64` builds the arm64 image from Arch Linux ARM. Last measured: 2.6 GB image, 576 packages, 5.7 GB installed (Codex and Claude Code from npm included)
+- `make arm64` builds the arm64 image from Arch Linux ARM. Last measured: 2.6 GB image, 576 packages, 5.7 GB installed (Codex, Claude Code and Pi from npm included)
 - The image boots to the Hyprland desktop in about 8 s at 1512x982, with the top bar and the dock. Memory in use at idle: about 350 MB
 - Terminal, Chromium (native Wayland) and the cheat sheet open, and the network works
 
