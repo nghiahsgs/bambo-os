@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# bambo-share: mount the folder the host shares with this VM at ~/Mac.
+#
+# scripts/try-bambo.sh offers the folder over virtio-9p under the tag "mac".
+# Started as root by bambo-share.service before login. Does nothing, and
+# reports success, on a machine with no such share.
+#
+# The host does every file operation as the host user, and the guest checks
+# permissions against the numeric owner it sees. Writing therefore needs the
+# guest user to have the same uid as the host user. The arm64 image is built
+# that way (BAMBO_UID in build-arm64.sh).
+set -euo pipefail
+
+tag=mac
+modprobe -q 9pnet_virtio 2>/dev/null || true
+grep -qsx "$tag" /sys/bus/virtio/drivers/9pnet_virtio/virtio*/mount_tag 2>/dev/null || exit 0
+
+# The desktop user: the first account with a home directory under /home.
+user="$(awk -F: '$6 ~ /^\/home\// { print $1; exit }' /etc/passwd)"
+[[ -n $user ]] || { echo "bambo-share: no user with a home under /home."; exit 0; }
+home="$(getent passwd "$user" | cut -d: -f6)"
+dir="$home/Mac"
+
+mountpoint -q "$dir" && exit 0
+install -d -o "$user" -g "$user" "$dir"
+mount -t 9p -o "trans=virtio,version=9p2000.L,msize=1048576" "$tag" "$dir"
+
+owner="$(stat -c %u "$dir")"
+if [[ $owner != "$(id -u "$user")" ]]; then
+  echo "bambo-share: $dir belongs to uid $owner on the host, $user is uid $(id -u "$user"). It is read-only for $user. Rebuild the image with BAMBO_UID=$owner."
+fi
+echo "bambo-share: host folder mounted at $dir"

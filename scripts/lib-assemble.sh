@@ -24,6 +24,13 @@ bambo_assemble_root() {
     install -m 755 "$tool" "$bin/"
   done
   install -D -m 644 -t "$root/etc/udev/rules.d" "$repo"/system/udev/*.rules
+  # Units are enabled by hand: systemctl is not usable in every build root.
+  local unit
+  for unit in "$repo"/system/systemd/*.service; do
+    install -D -m 644 -t "$root/etc/systemd/system" "$unit"
+    mkdir -p "$root/etc/systemd/system/multi-user.target.wants"
+    ln -sf "../$(basename "$unit")" "$root/etc/systemd/system/multi-user.target.wants/$(basename "$unit")"
+  done
   cp "$repo/themes/tessera/wallpaper.png" "$repo/themes/tessera/logo.svg" "$share/tessera/"
   cp "$repo/iso/packages.x86_64" "$share/packages.x86_64"
 }

@@ -9,7 +9,8 @@
 # Arch Linux ARM + the BamboOS package set and dotfiles, user "bambo" with an
 # empty password, auto-login on tty1. Output: out/bambo-os-<date>-aarch64.qcow2
 #
-# Env: BAMBO_OUT_DIR (default ./out), BAMBO_IMAGE_GIB (virtual disk size, default 16).
+# Env: BAMBO_OUT_DIR (default ./out), BAMBO_IMAGE_GIB (virtual disk size, default 16),
+# BAMBO_UID (uid of the VM user, default: the uid of the user running the build).
 set -euo pipefail
 
 repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -17,6 +18,10 @@ repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 if [[ ${1:-} != inside ]]; then
   command -v docker >/dev/null || { echo "build-arm64.sh: docker is required." >&2; exit 1; }
   out="${BAMBO_OUT_DIR:-$repo/out}"
+  # The VM user gets the uid of whoever builds the image, so a folder shared
+  # from this machine is writable in the VM (see scripts/bambo-share).
+  host_uid="$(id -u)"
+  ((host_uid >= 500)) || host_uid=1000
   mkdir -p "$out"
   docker build --platform linux/arm64 -f "$repo/arm64/Containerfile" -t bambo-arm64-builder "$repo/arm64"
   docker volume create bambo-arm64-work >/dev/null
@@ -25,6 +30,7 @@ if [[ ${1:-} != inside ]]; then
     -v "$repo:/src:ro" -v "$out:/out" \
     -v bambo-arm64-work:/work -v bambo-arm64-pkgcache:/var/cache/pacman/pkg \
     -e BAMBO_IMAGE_GIB="${BAMBO_IMAGE_GIB:-16}" \
+    -e BAMBO_UID="${BAMBO_UID:-$host_uid}" \
     bambo-arm64-builder /src/scripts/build-arm64.sh inside
 fi
 
@@ -122,7 +128,7 @@ done
 
 # Same account as the live ISO: "bambo", empty password, sudo without a prompt.
 arch-chroot "$target" userdel -r alarm >/dev/null 2>&1 || true
-arch-chroot "$target" useradd -m -G wheel,docker -s /usr/bin/zsh bambo
+arch-chroot "$target" useradd -m -u "${BAMBO_UID:-1000}" -G wheel,docker -s /usr/bin/zsh bambo
 arch-chroot "$target" passwd -d bambo >/dev/null
 arch-chroot "$target" passwd -l root >/dev/null
 install -m 440 /dev/stdin "$target/etc/sudoers.d/10-wheel" <<'SUDO'

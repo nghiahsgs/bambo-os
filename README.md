@@ -45,7 +45,7 @@ The screenshot is taken by CI from the live ISO running in QEMU. Status: v0.1, e
 
    It asks for disk, hostname, username and password, then wipes the disk and installs. It needs an internet connection (`nmtui` for Wi-Fi).
 
-On an Apple Silicon Mac, skip the ISO. `make arm64` builds a ready-to-boot arm64 image and `make try` opens it full screen at native CPU speed. See [docs/quickstart.md](docs/quickstart.md).
+On an Apple Silicon Mac, skip the ISO. `make arm64` builds a ready-to-boot arm64 image and `make try` opens it full screen at native CPU speed. `make app` gives you a window for it, with a folder picker that shares a Mac folder with the VM as `~/Mac`. See [docs/quickstart.md](docs/quickstart.md).
 
 More detail: [docs/quickstart.md](docs/quickstart.md).
 

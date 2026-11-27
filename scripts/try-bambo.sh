@@ -21,10 +21,21 @@
 #                         pixels to draw). Set it to the point size if arm64 lags.
 #   BAMBO_WINDOWED=1      start in a window instead of full screen
 #   BAMBO_CLIPBOARD=0     macOS: do not share the clipboard with the VM
+#   BAMBO_SHARE=/path     arm64 image: share this folder with the VM, read-write.
+#                         It appears there as ~/Mac. Must be a folder inside your
+#                         home directory or on an external volume.
+#   BAMBO_STATE=out       where the VM disk, pid file and control socket live
+#   BAMBO_DRY_RUN=1       print the QEMU command instead of running it
 #   BAMBO_MEM=4096        RAM in MiB
 #   BAMBO_CPUS=4
 #   BAMBO_DISK=out/test-disk.qcow2   x86 only: blank disk for bambo-install (created if missing)
 #   BAMBO_QEMU_EXTRA="..."           extra QEMU arguments
+#
+# Other commands, used by the Try BamboOS app (make app):
+#   scripts/try-bambo.sh --info     image, VM disk and running state as key=value lines
+#   scripts/try-bambo.sh --stop     ask the running VM to shut down cleanly
+#   scripts/try-bambo.sh --kill     stop the running VM at once
+#   scripts/try-bambo.sh --reset    delete the VM disk (the VM must be stopped)
 #
 # Leave: Ctrl+Option+G releases the keyboard, then Cmd+Q quits (Cmd+F leaves full screen).
 set -euo pipefail
@@ -34,6 +45,86 @@ cd "$(dirname "$0")/.."
 newest() { find out -maxdepth 1 -name "$1" -print0 2>/dev/null | xargs -0 ls -t 2>/dev/null | head -n1 || true; }
 
 os="$(uname -s)"
+state="${BAMBO_STATE:-out}"
+overlay="$state/try-arm64.qcow2" vars="$state/try-arm64-vars.fd"
+pidfile="$state/try.pid" qmp="$state/try-qmp.sock"
+
+# Pid of the running VM, or nothing.
+vm_pid() {
+  local pid
+  pid="$(cat "$pidfile" 2>/dev/null || true)"
+  if [[ $pid =~ ^[0-9]+$ ]] && kill -0 "$pid" 2>/dev/null; then echo "$pid"; return; fi
+  # A VM started by an older version of this script left no pid file.
+  pgrep -f "qemu-system-.*file=$overlay," 2>/dev/null | head -n1 || true
+}
+
+# The image a VM disk was made for must be this exact build (see below).
+image_stamp() { echo "$(realpath "$1") $(stat -f %m "$1" 2>/dev/null || stat -c %Y "$1")"; }
+file_size() { stat -f %z "$1" 2>/dev/null || stat -c %s "$1" 2>/dev/null || echo 0; }
+file_mtime() { stat -f %m "$1" 2>/dev/null || stat -c %Y "$1" 2>/dev/null || echo 0; }
+
+# share_dir <path>: print the real path of a folder that is safe to share, or
+# fail with the reason. The VM writes there as you, and agents inside the VM
+# run without a sandbox, so the home folder itself and system folders are refused.
+share_dir() {
+  local dir="$1" real
+  [[ $dir == /* ]] || { echo "the shared folder must be an absolute path." >&2; return 1; }
+  [[ -d $dir ]] || { echo "the shared folder does not exist: $dir" >&2; return 1; }
+  real="$(cd "$dir" && pwd -P)"
+  case "$real" in
+    "$HOME") echo "sharing the whole home folder is not allowed. Pick a folder inside it." >&2; return 1 ;;
+    "$HOME"/Library | "$HOME"/Library/*) echo "sharing ~/Library is not allowed." >&2; return 1 ;;
+    "$HOME"/.ssh | "$HOME"/.ssh/* | "$HOME"/.gnupg | "$HOME"/.gnupg/*) echo "sharing a folder with keys is not allowed." >&2; return 1 ;;
+    "$HOME"/* | /Volumes/*/* | /private/tmp/* | /tmp/*) ;;
+    *) echo "the shared folder must be inside your home folder or on an external volume: $real" >&2; return 1 ;;
+  esac
+  printf '%s\n' "$real"
+}
+
+case "${1:-}" in
+  --stop)
+    [[ -n $(vm_pid) ]] || { echo "try-bambo: no VM is running."; exit 0; }
+    # Same as pressing the power button: the guest shuts down and QEMU exits.
+    [[ -S $qmp ]] || { echo "try-bambo: this VM has no control socket. Shut it down from inside (Super + Escape)." >&2; exit 1; }
+    (printf '{"execute":"qmp_capabilities"}\n{"execute":"system_powerdown"}\n'; sleep 1) | nc -U "$qmp" >/dev/null
+    echo "try-bambo: asked the VM to shut down."
+    exit 0 ;;
+  --kill)
+    pid="$(vm_pid)"
+    [[ -n $pid ]] || { echo "try-bambo: no VM is running."; exit 0; }
+    kill "$pid"
+    echo "try-bambo: stopped the VM."
+    exit 0 ;;
+  --reset)
+    [[ -z $(vm_pid) ]] || { echo "try-bambo: the VM is running. Stop it first." >&2; exit 1; }
+    rm -f "$overlay" "$overlay.stamp" "$vars"
+    echo "try-bambo: VM disk deleted. The next start uses a clean image."
+    exit 0 ;;
+  --info)
+    image="$(newest 'bambo-os-*-aarch64.qcow2')"
+    echo "image=$image"
+    if [[ -n $image ]]; then
+      echo "image_size=$(file_size "$image")"
+      echo "image_mtime=$(file_mtime "$image")"
+    fi
+    if [[ -e $overlay ]]; then
+      echo "disk_size=$(file_size "$overlay")"
+      # "stale" means the image was rebuilt: the next start replaces the disk.
+      if [[ -n $image && $(cat "$overlay.stamp" 2>/dev/null) == "$(image_stamp "$image")" ]]; then
+        echo "disk=current"
+      else
+        echo "disk=stale"
+      fi
+    else
+      echo "disk=none"
+    fi
+    echo "pid=$(vm_pid)"
+    exit 0 ;;
+  --*) echo "try-bambo: unknown option $1" >&2; exit 1 ;;
+esac
+
+[[ -z $(vm_pid) ]] || { echo "try-bambo: a VM is already running (pid $(vm_pid))." >&2; exit 1; }
+
 media="${1:-}"
 if [[ -z $media && $os == Darwin && $(uname -m) == arm64 ]]; then
   media="$(newest 'bambo-os-*-aarch64.qcow2')"
@@ -69,19 +160,33 @@ xres="${BASH_REMATCH[1]}" yres="${BASH_REMATCH[2]}"
 
 if [[ ${BAMBO_WINDOWED:-0} == 1 ]]; then full=off; else full=on; fi
 
+mkdir -p "$state"
+rm -f "$qmp"
 args=(-name BamboOS -m "${BAMBO_MEM:-4096}" -smp "${BAMBO_CPUS:-4}"
-  -device qemu-xhci -device usb-tablet)
+  -device qemu-xhci -device usb-tablet
+  -pidfile "$pidfile" -qmp "unix:$qmp,server=on,wait=off")
+
+shared=""
+if [[ -n ${BAMBO_SHARE:-} ]]; then
+  if [[ $arch != aarch64 ]]; then
+    echo "try-bambo: BAMBO_SHARE only works with the arm64 image. Not sharing a folder."
+  else
+    shared="$(share_dir "$BAMBO_SHARE")" || { echo "try-bambo: folder not shared, see above." >&2; exit 1; }
+    # QEMU splits options at commas. A doubled comma is a literal one.
+    args+=(-virtfs "local,path=${shared//,/,,},mount_tag=mac,security_model=none,multidevs=remap")
+  fi
+fi
 
 if [[ $arch == aarch64 ]]; then
   [[ $os == Darwin && $(uname -m) == arm64 ]] || { echo "try-bambo: the arm64 image needs an Apple Silicon Mac." >&2; exit 1; }
   share="$(dirname "$(realpath "$(command -v "$qemu")")")/../share/qemu"
   code="$share/edk2-aarch64-code.fd"
   [[ -r $code && -r $share/edk2-arm-vars.fd ]] || { echo "try-bambo: UEFI firmware not found in $share." >&2; exit 1; }
-  overlay=out/try-arm64.qcow2 vars=out/try-arm64-vars.fd
+  mkdir -p "$state"
   # The VM disk is an overlay on one image and is only valid for that exact
   # build. The stamp records which one: file times alone do not work, because a
   # running VM keeps the overlay newer than any image built meanwhile.
-  stamp="$(realpath "$media") $(stat -f %m "$media" 2>/dev/null || stat -c %Y "$media")"
+  stamp="$(image_stamp "$media")"
   if [[ ! -e $overlay || $(cat "$overlay.stamp" 2>/dev/null) != "$stamp" ]]; then
     echo "try-bambo: new VM disk $overlay on top of $media"
     rm -f "$overlay" "$vars"
@@ -132,12 +237,17 @@ if [[ $os == Darwin ]]; then
     args+=(-device virtio-serial-pci
       -chardev "socket,id=clip,path=$clip,server=on,wait=off"
       -device "virtserialport,chardev=clip,name=org.bambo.clipboard")
-    python3 "$(dirname "$0")/clipboard-host.py" "$clip" &
+    [[ ${BAMBO_DRY_RUN:-0} == 1 ]] || python3 "$(dirname "$0")/clipboard-host.py" "$clip" &
   fi
 fi
 
 # full-grab sends Cmd+Space, Cmd+Tab and friends to the guest. It needs the
 # Accessibility permission for the app that starts QEMU and is skipped without it.
 echo "try-bambo: $media ($arch) at ${xres}x${yres}, full screen $full"
+[[ -z $shared ]] || echo "try-bambo: sharing $shared with the VM as ~/Mac"
+if [[ ${BAMBO_DRY_RUN:-0} == 1 ]]; then
+  printf '%q ' "$qemu" "${args[@]}"; printf '\n'
+  exit 0
+fi
 # shellcheck disable=SC2086
 exec "$qemu" "${args[@]}" ${BAMBO_QEMU_EXTRA:-}

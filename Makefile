@@ -2,6 +2,7 @@
 #   make iso       build out/bambo-os-<date>-x86_64.iso (native on Arch, Docker elsewhere)
 #   make lint      shellcheck + bash -n + Lua syntax + JSON checks
 #   make arm64     build out/bambo-os-*-aarch64.qcow2, a ready-to-boot image for Apple Silicon (needs Docker)
+#   make app       macOS: build and open "out/Try BamboOS.app", a window to start the VM and share a folder
 #   make try       boot BamboOS full screen in QEMU: the arm64 image on Apple Silicon, else the ISO
 #   make test-vm   boot the newest ISO in QEMU with a window
 #   make iso-test  build out/test/*.iso with the bambo-smoke test service included
@@ -17,7 +18,7 @@ HOST_ARCH := $(shell uname -m)
 SCRIPTS := $(shell grep -lE '^\#!.*\bbash' scripts/bambo-* scripts/*.sh)
 PYTHON_SCRIPTS := scripts/bambo-clipboard scripts/clipboard-host.py
 
-.PHONY: iso iso-test arm64 lint try test-vm smoke wallpaper clean
+.PHONY: iso iso-test arm64 app lint try test-vm smoke wallpaper clean
 
 TEST_ISO = $(shell ls -t out/test/bambo-os-*.iso 2>/dev/null | head -n1)
 SMOKE ?= 0
@@ -54,6 +55,10 @@ arm64:
 
 try:
 	scripts/try-bambo.sh
+
+app:
+	scripts/build-app.sh
+	@open "out/Try BamboOS.app"
 
 test-vm:
 	@[ -n "$(ISO)" ] || { echo "No ISO in out/. Run: make iso"; exit 1; }

@@ -64,6 +64,9 @@ make try
 - The image is an installed system, not a live medium. User `bambo`, empty password, `sudo` without a prompt. There is no `bambo-install` in it.
 - `make try` opens it full screen. The arm64 guest gets one mode with the pixel size of your main display (3024x1964 on a 14 inch MacBook Pro) and BamboOS scales it 2x, so text is sharp. Drawing is done by the CPU, so if it feels slow, halve it with `BAMBO_RES=1512x982`. Other settings: `BAMBO_WINDOWED=1`, `BAMBO_MEM`, `BAMBO_CPUS`.
 - Your changes live in `out/try-arm64.qcow2`. Delete it to start clean. Rebuilding the image also resets it.
+- `make app` builds and opens `out/Try BamboOS.app`, a window that does the same as `make try`: start, shut down, reset the VM disk, memory and CPU cores, and a shared folder. It needs the Xcode command line tools.
+- Shared folder: pick one in the app, or run `BAMBO_SHARE=~/Projects make try`. It appears in the VM as `~/Mac`, read-write, and survives a rebuild of the image because the files stay on the Mac. The VM can change everything in it, and `cy` and `cly` run agents there without a sandbox, so share a project folder. The home folder itself, `~/Library` and system folders are refused.
+- The VM user has the same uid as the Mac user who ran `make arm64`. That is what makes the shared folder writable. An image built by someone else shows the folder read-only: rebuild it, or pass `BAMBO_UID`.
 - Graphics are software-rendered. Stock QEMU on macOS has no GPU acceleration for Linux guests.
 - Command is `Super` inside the VM.
 - Copy and paste cross between the VM and macOS (text only, up to 1 MiB). Whatever you copy on the Mac while the VM runs is sent into the VM, passwords included. `BAMBO_CLIPBOARD=0 make try` turns it off.
