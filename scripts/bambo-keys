@@ -10,8 +10,13 @@ if [[ -n ${WAYLAND_DISPLAY:-} && -t 1 ]] || [[ -z ${WAYLAND_DISPLAY:-} ]]; then
   exit 0
 fi
 
+# Pressing the key again closes the sheet.
+if pkill -x rofi 2>/dev/null; then exit 0; fi
+
+# Two columns, so the whole sheet fits on a 1512x982 screen without scrolling.
 lines="$(wc -l <"$keys")"
-((lines > 30)) && lines=30
-rofi -dmenu -i -p "keys" \
-  -theme-str "window { width: 720px; } listview { lines: $lines; } * { font: \"JetBrainsMono Nerd Font 11\"; }" \
+rows=$(((lines + 1) / 2))
+((rows > 18)) && rows=18
+rofi -dmenu -i -p "keys" -mesg "Esc or Super + K closes. Type to filter." \
+  -theme-str "window { width: 1320px; } listview { columns: 2; lines: $rows; spacing: 0px; } element { padding: 5px 12px; } textbox { text-color: #8e8e96; padding: 2px 12px; } * { font: \"JetBrainsMono Nerd Font 10\"; }" \
   <"$keys" >/dev/null || true

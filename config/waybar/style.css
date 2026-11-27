@@ -65,7 +65,7 @@ window#waybar.dock .modules-center {
   border-radius: 18px;
   padding: 0 8px;
 }
-#custom-terminal, #custom-browser, #custom-record {
+#custom-search, #custom-terminal, #custom-browser, #custom-record {
   font-family: "JetBrainsMono Nerd Font";
   font-size: 20px;
   min-width: 44px;
@@ -74,7 +74,8 @@ window#waybar.dock .modules-center {
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
 }
+#custom-search { color: #f4f4f5; }
 #custom-terminal { color: #3ecf8e; }
 #custom-browser { color: #5b8def; }
 #custom-record { color: #ff8a4c; }
-#custom-terminal:hover, #custom-browser:hover, #custom-record:hover { background: #1c1c1f; }
+#custom-search:hover, #custom-terminal:hover, #custom-browser:hover, #custom-record:hover { background: #1c1c1f; }

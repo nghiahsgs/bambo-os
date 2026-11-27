@@ -1,7 +1,7 @@
 Super + Enter             Terminal
 Super + Alt + Enter       Terminal with tmux
 Super + Shift + Enter     Browser (also Super + B, Super + Shift + B)
-Super + Space             App launcher (also Super + Alt + Space)
+Super + Space             App launcher (also Super + R)
 Super + Shift + F         File manager (yazi)
 Super + Shift + N         Editor (Neovim with LazyVim, Space shows its keys)
 Super + Shift + A         Codex agent

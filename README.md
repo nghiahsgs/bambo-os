@@ -55,7 +55,7 @@ The chords follow Omarchy, so there is nothing to relearn. The full list is on `
 
 - `Super + Enter`: terminal
 - `Super + Shift + Enter`: browser
-- `Super + Space`: app launcher
+- `Super + Space` or `Super + R`: app launcher (also the search icon in the dock)
 - `Super + Shift + F`: file manager (yazi)
 - `Super + Shift + N`: Neovim, set up as LazyVim (press `Space` inside for its menu)
 - `Super + Shift + D`: Docker (lazydocker)

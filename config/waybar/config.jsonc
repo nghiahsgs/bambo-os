@@ -48,12 +48,13 @@
     "name": "dock",
     "layer": "top",
     "position": "bottom",
-    "width": 196,
+    "width": 260,
     "height": 60,
     "margin-bottom": 12,
     "spacing": 8,
-    "modules-center": ["custom/terminal", "custom/browser", "custom/record"],
+    "modules-center": ["custom/search", "custom/terminal", "custom/browser", "custom/record"],
 
+    "custom/search": { "format": "", "tooltip-format": "Search apps (Super + Space, or Super + R)", "on-click": "pkill -x rofi || rofi -show drun" },
     "custom/terminal": { "format": "", "tooltip-format": "Terminal (Super + Enter)", "on-click": "kitty" },
     "custom/browser": { "format": "", "tooltip-format": "Browser (Super + Shift + Enter)", "on-click": "chromium" },
     "custom/record": { "format": "", "tooltip-format": "Record screen (Super + Shift + R)", "on-click": "bambo-record toggle" }

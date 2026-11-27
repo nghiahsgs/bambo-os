@@ -20,9 +20,11 @@ hl.bind(mod .. " + SHIFT + N",      tui("nvim"))
 hl.bind(mod .. " + SHIFT + T",      tui("btop"))
 hl.bind(mod .. " + SHIFT + A",      tui("bambo-codex"))
 hl.bind(mod .. " + SHIFT + D",      tui("lazydocker"))
-hl.bind(mod .. " + space",          run("rofi -show drun"))
+hl.bind(mod .. " + space",          run("pkill -x rofi || rofi -show drun"))
 -- macOS keeps Cmd + Space when BamboOS runs in a VM, so the launcher has a second chord.
-hl.bind(mod .. " + ALT + space",    run("rofi -show drun"))
+hl.bind(mod .. " + ALT + space",    run("pkill -x rofi || rofi -show drun"))
+-- macOS keeps Cmd + Space for Spotlight when BamboOS runs in a VM on a Mac.
+hl.bind(mod .. " + R",              run("pkill -x rofi || rofi -show drun"))
 
 -- Windows
 hl.bind(mod .. " + W",       hl.dsp.window.close())
