@@ -11,7 +11,7 @@ bambo_assemble_root() {
   local skel="$root/etc/skel" bin="$root/usr/local/bin" share="$root/usr/share/bambo"
 
   mkdir -p "$skel/.config" "$bin" "$share/tessera"
-  for dir in hypr kitty waybar rofi mako mpv tmux bambo fontconfig; do
+  for dir in hypr kitty waybar rofi mako mpv tmux bambo fontconfig nvim; do
     cp -a "$repo/config/$dir" "$skel/.config/"
   done
   cp "$repo/config/starship.toml" "$skel/.config/starship.toml"

@@ -69,6 +69,11 @@ unzip
 neovim
 vim
 yazi
+# for the Neovim setup: file finder, parser compiler, git UI
+fd
+gcc
+tree-sitter-cli
+lazygit
 gum
 
 # --- agent-ready runtimes

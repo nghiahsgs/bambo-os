@@ -132,6 +132,12 @@ UNIT
 done
 arch-chroot "$target" systemctl enable NetworkManager.service systemd-timesyncd.service docker.socket >/dev/null 2>&1
 
+# Download the Neovim plugins now, so the first start is instant and works offline.
+# Language servers and parsers still install on first use. Failure is not fatal.
+step "Downloading the Neovim plugins"
+arch-chroot -u bambo "$target" env HOME=/home/bambo nvim --headless "+Lazy! restore" +qa >/dev/null 2>&1 ||
+  echo "warning: Neovim plugins were not downloaded. They install on the first start."
+
 step "Installing the bootloader (systemd-boot at the removable path)"
 # A new VM has an empty variable store, so the firmware only finds EFI/BOOT/BOOTAA64.EFI.
 install -D -m 644 "$target/usr/lib/systemd/boot/efi/systemd-bootaa64.efi" "$target/boot/EFI/BOOT/BOOTAA64.EFI"
