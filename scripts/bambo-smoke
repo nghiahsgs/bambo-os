@@ -110,12 +110,12 @@ if grep -qa bambo-smoke-full /sys/firmware/dmi/entries/11-0/raw 2>/dev/null; the
   key meta_l-ret kitty TERMINAL
   key meta_l-spc rofi LAUNCHER launcher
   say "BAMBO_KEY_SEND=esc"; sleep 5
-  key meta_l-slash rofi CHEATSHEET keys
+  key meta_l-k rofi CHEATSHEET keys
   say "BAMBO_KEY_SEND=esc"; sleep 5
-  key meta_l-shift-e rofi POWER power
+  key meta_l-esc rofi POWER power
   say "BAMBO_KEY_SEND=esc"; sleep 5
   key meta_l-shift-r wf-recorder RECORD recording
   say "BAMBO_KEY_SEND=meta_l-shift-r"; sleep 6
-  key meta_l-esc hyprlock LOCK lock
+  key meta_l-ctrl-l hyprlock LOCK lock
 fi
 say "BAMBO_SMOKE_DONE"
