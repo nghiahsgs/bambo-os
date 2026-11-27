@@ -51,21 +51,25 @@ More detail: [docs/quickstart.md](docs/quickstart.md).
 
 ## Keyboard
 
+The chords follow Omarchy, so there is nothing to relearn. The full list is on `Super + K`.
+
 - `Super + Enter`: terminal
-- `Super + B`: browser
+- `Super + Shift + Enter`: browser
 - `Super + Space`: app launcher
-- `Super + Q`: close window
+- `Super + Shift + F`: file manager (yazi)
+- `Super + Shift + A`: Codex agent. In a terminal, `cy` starts it with no approval prompts
+- `Super + W`: close window
 - `Super + F`: fullscreen
-- `Super + V`: toggle floating / tiling
-- `Super + 1..9`: switch workspace
-- `Super + Shift + 1..9`: move window to workspace
-- `Super + H / J / K / L`: move focus
-- `Super + Shift + H / J / K / L`: swap window position
+- `Super + T`: toggle floating / tiling
+- `Super + Arrows`: move focus
+- `Super + Shift + Arrows`: swap window position
+- `Super + 1..0`: switch workspace
+- `Super + Shift + 1..0`: move window to workspace
+- `Super + C / V`: copy and paste, in the terminal too
 - `Super + Shift + S`: screenshot a region, saved to `~/Pictures` and copied
 - `Super + Shift + R`: start / stop screen recording, saved to `~/Videos`, red dot in the bar while recording
-- `Super + Escape`: lock screen
-- `Super + Shift + E`: power menu
-- `Super + /`: cheat sheet
+- `Super + Escape`: power menu (lock, logout, reboot, shutdown)
+- `Super + K`: cheat sheet
 
 ## What is in the box
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# bambo-power: power menu (Super + Shift + E).
+# bambo-power: power menu (Super + Escape).
 set -euo pipefail
 
 choice="$(printf 'Lock\nLogout\nReboot\nShutdown\n' |

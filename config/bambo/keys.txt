@@ -1,16 +1,28 @@
-Super + Enter             Open terminal
-Super + B                 Open browser
-Super + Space             App launcher
-Super + Q                 Close window
+Super + Enter             Terminal
+Super + Alt + Enter       Terminal with tmux
+Super + Shift + Enter     Browser (also Super + B, Super + Shift + B)
+Super + Space             App launcher (also Super + Alt + Space)
+Super + Shift + F         File manager (yazi)
+Super + Shift + N         Editor (neovim)
+Super + Shift + A         Codex agent
+Super + Shift + T         Activity (btop)
+Super + W                 Close window (also Super + Q)
 Super + F                 Fullscreen
-Super + V                 Toggle floating / tiling
-Super + 1..9              Switch workspace
-Super + Shift + 1..9      Move window to workspace
-Super + H / J / K / L     Move focus (left / down / up / right)
-Super + Shift + H/J/K/L   Swap window position
+Super + Alt + F           Maximize
+Super + T                 Toggle floating / tiling
+Super + J                 Toggle split direction
+Super + Arrows            Move focus
+Super + Shift + Arrows    Swap window position
+Alt + Tab                 Next window
+Super + - / =             Resize width (with Shift: height)
+Super + 1..0              Switch workspace
+Super + Shift + 1..0      Move window to workspace
+Super + Tab               Next workspace (with Shift: previous)
+Super + S                 Scratchpad (Super + Alt + S sends a window there)
+Super + C / V / X / A     Copy / paste / cut / select all
 Super + Shift + S         Screenshot a region (saved to ~/Pictures, copied)
 Print                     Screenshot the whole screen
 Super + Shift + R         Start / stop screen recording (saved to ~/Videos)
-Super + Escape            Lock screen
-Super + Shift + E         Power menu (lock, logout, reboot, shutdown)
-Super + /                 This cheat sheet
+Super + Escape            Power menu (lock, logout, reboot, shutdown)
+Super + Ctrl + L          Lock screen
+Super + K                 This cheat sheet (also Super + /)

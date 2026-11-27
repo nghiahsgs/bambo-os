@@ -55,7 +55,7 @@
     "modules-center": ["custom/terminal", "custom/browser", "custom/record"],
 
     "custom/terminal": { "format": "", "tooltip-format": "Terminal (Super + Enter)", "on-click": "kitty" },
-    "custom/browser": { "format": "", "tooltip-format": "Browser (Super + B)", "on-click": "chromium" },
+    "custom/browser": { "format": "", "tooltip-format": "Browser (Super + Shift + Enter)", "on-click": "chromium" },
     "custom/record": { "format": "", "tooltip-format": "Record screen (Super + Shift + R)", "on-click": "bambo-record toggle" }
   }
 ]

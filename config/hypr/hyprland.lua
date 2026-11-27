@@ -16,7 +16,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("waybar")
     hl.exec_cmd("mako")
     hl.exec_cmd("xdg-user-dirs-update")
-    hl.exec_cmd("notify-send -a BamboOS 'Welcome to BamboOS' 'Super + / shows every shortcut.'")
+    hl.exec_cmd("notify-send -a BamboOS 'Welcome to BamboOS' 'Super + K shows every shortcut.'")
 
     -- "auto" scale trusts the physical size the display reports. Some VMs report
     -- a tiny one, and a small mode then gets scaled 2x into an unusable desktop.

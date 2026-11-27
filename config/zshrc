@@ -21,6 +21,9 @@ alias ...='cd ../..'
 alias update='sudo pacman -Syu'
 alias keys='bambo-keys'
 alias bambofetch='bambo-fetch'
+# cy: Codex with no approval prompts and no sandbox. It can run any command, so use it in a VM or a throwaway checkout.
+alias cy='bambo-codex --dangerously-bypass-approvals-and-sandbox'
+alias cx='bambo-codex'
 
 [[ -r /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh ]] &&
   source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh

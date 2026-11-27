@@ -6,3 +6,4 @@ intel-ucode
 amd-ucode
 grub
 efibootmgr
+openai-codex

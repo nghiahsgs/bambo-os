@@ -26,7 +26,7 @@ case "${1:-status}" in
     sudo loginctl enable-linger "$USER"
     ensure_session
     echo "Agent mode is ON. The desktop will not start on the next login."
-    echo "Reboot, or log out of Hyprland (Super + Shift + E), to free the GPU and RAM now."
+    echo "Reboot, or log out of Hyprland (Super + Escape), to free the GPU and RAM now."
     echo "Attach with: bambo-agent shell"
     ;;
   off)

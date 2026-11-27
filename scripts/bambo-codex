@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# bambo-codex: start the Codex agent, or say how to get it when it is missing.
+set -euo pipefail
+
+if command -v codex >/dev/null 2>&1; then
+  exec codex "$@"
+fi
+
+echo "Codex is not installed. Install it with:"
+echo "  npm install -g @openai/codex"
+echo
+read -r -n 1 -s -p "Press any key to close."

@@ -10,6 +10,8 @@ if [[ -n ${WAYLAND_DISPLAY:-} && -t 1 ]] || [[ -z ${WAYLAND_DISPLAY:-} ]]; then
   exit 0
 fi
 
+lines="$(wc -l <"$keys")"
+((lines > 30)) && lines=30
 rofi -dmenu -i -p "keys" \
-  -theme-str 'window { width: 720px; } listview { lines: 16; } * { font: "JetBrainsMono Nerd Font 11"; }' \
+  -theme-str "window { width: 720px; } listview { lines: $lines; } * { font: \"JetBrainsMono Nerd Font 11\"; }" \
   <"$keys" >/dev/null || true

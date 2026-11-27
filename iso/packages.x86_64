@@ -67,6 +67,8 @@ fzf
 jq
 unzip
 neovim
+vim
+yazi
 gum
 
 # --- agent-ready runtimes
@@ -75,3 +77,4 @@ nodejs-lts-krypton
 npm
 python
 uv
+openai-codex
