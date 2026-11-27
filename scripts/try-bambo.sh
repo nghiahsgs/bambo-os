@@ -86,7 +86,8 @@ case "${1:-}" in
     [[ -n $(vm_pid) ]] || { echo "try-bambo: no VM is running."; exit 0; }
     # Same as pressing the power button: the guest shuts down and QEMU exits.
     [[ -S $qmp ]] || { echo "try-bambo: this VM has no control socket. Shut it down from inside (Super + Escape)." >&2; exit 1; }
-    (printf '{"execute":"qmp_capabilities"}\n{"execute":"system_powerdown"}\n'; sleep 1) | nc -U "$qmp" >/dev/null
+    (printf '{"execute":"qmp_capabilities"}\n{"execute":"system_powerdown"}\n'; sleep 1) | nc -U "$qmp" >/dev/null ||
+      { echo "try-bambo: could not reach the VM's control socket $qmp." >&2; exit 1; }
     echo "try-bambo: asked the VM to shut down."
     exit 0 ;;
   --kill)
