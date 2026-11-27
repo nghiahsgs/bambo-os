@@ -114,7 +114,7 @@ Checked by CI on every push, against current Arch (see the Actions tab):
 CI builds two images: the release ISO, and a test ISO that is the same plus a small reporting service (`bambo-smoke`). The boot and install checks below run on the test ISO.
 
 - Shell scripts pass `shellcheck`, Lua passes `luac`, Hyprland itself accepts the config (`Hyprland --verify-config`)
-- The ISO builds. Last measured: 2.2 GB (target 2.5 GB or less)
+- The ISO builds. Last measured: 2.5 GB (limit 3 GB, see [decisions](docs/decisions.md))
 - The ISO boots in QEMU (BIOS) to the Hyprland desktop with waybar running
 - Inside that VM: the terminal opens, `bambo-shot` saves a screenshot, `bambo-record` saves a recording, Chromium starts
 - Real key presses sent into the VM open the terminal, launcher, cheat sheet and power menu, toggle recording and lock the screen
@@ -124,7 +124,7 @@ CI builds two images: the release ISO, and a test ISO that is the same plus a sm
 
 Checked by hand on one machine (MacBook Pro M5, QEMU 11.1 with HVF), not by CI:
 
-- `make arm64` builds the arm64 image from Arch Linux ARM. Last measured: 1.9 GB image, 528 packages, 4.4 GB installed (Codex from npm is about 0.4 GB of that)
+- `make arm64` builds the arm64 image from Arch Linux ARM. Last measured: 2.6 GB image, 576 packages, 5.7 GB installed (Codex and Claude Code from npm included)
 - The image boots to the Hyprland desktop in about 8 s at 1512x982, with the top bar and the dock. Memory in use at idle: about 350 MB
 - Terminal, Chromium (native Wayland) and the cheat sheet open, and the network works
 

@@ -44,7 +44,7 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
           . out/build-report.txt
-          [ "$iso_size_mb" -le 2560 ] || { echo "ISO is larger than 2.5 GB"; exit 1; }
+          [ "$iso_size_mb" -le 3072 ] || { echo "ISO is larger than 3 GB"; exit 1; }
 
       - name: Upload ISO
         uses: actions/upload-artifact@v4

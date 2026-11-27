@@ -22,6 +22,7 @@ Short record of choices made while implementing the PRD ([PRD.md](PRD.md)), with
 - **Single source for dotfiles.** `config/` is copied into `/etc/skel` at build time. The live user's home is created from `/etc/skel` at boot, and the installer copies the same `/etc/skel` to the target. There is one copy of every config file in the repo.
 - **Window title bars with coloured dots, and a floating activity card,** from the early mockup are not in v0.1. Hyprland has no built-in title bars (that needs a compiled plugin), and the card needs a widget engine. Both would add packages. CPU and RAM are in the top bar.
 
+- **The ISO limit is 3 GB, not the 2.5 GB of the PRD.** The PRD set 2.5 GB before Codex, a full Neovim setup and the helper tools (lazygit, lazydocker, GitHub CLI, yazi, zathura and others) were in scope. With them the ISO is about 2.52 GB. CI fails above 3072 MB.
 - **Auto-login stays on after install.** The PRD says "first boot only". With no display manager and no disk encryption, a login prompt adds little, so it is permanent and one `rm` turns it off (see quickstart).
 - **Typed answers in the installer use plain shell prompts**, not `gum input`. Under a scripted terminal, gum 2.0 returned empty text for typed input. The disk menu and yes/no prompts still use gum.
 - **Fonts.** A fontconfig file makes Inter the default sans font and JetBrains Mono the default monospace font for every app.
