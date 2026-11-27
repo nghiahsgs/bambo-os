@@ -16,6 +16,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("waybar")
     hl.exec_cmd("mako")
     hl.exec_cmd("xdg-user-dirs-update")
+    hl.exec_cmd("bambo-clipboard")  -- VM only: exits at once on a real machine
     hl.exec_cmd("notify-send -a BamboOS 'Welcome to BamboOS' 'Super + K shows every shortcut.'")
 
     -- "auto" scale trusts the physical size the display reports. Some VMs report

@@ -20,6 +20,7 @@
 #                         scales 2x), in points for the emulated x86 ISO (4x fewer
 #                         pixels to draw). Set it to the point size if arm64 lags.
 #   BAMBO_WINDOWED=1      start in a window instead of full screen
+#   BAMBO_CLIPBOARD=0     macOS: do not share the clipboard with the VM
 #   BAMBO_MEM=4096        RAM in MiB
 #   BAMBO_CPUS=4
 #   BAMBO_DISK=out/test-disk.qcow2   x86 only: blank disk for bambo-install (created if missing)
@@ -115,6 +116,21 @@ else
   else
     args+=(-enable-kvm -cpu host -vga none -device "virtio-vga-gl,xres=$xres,yres=$yres"
       -display "gtk,gl=on,full-screen=$full")
+  fi
+fi
+
+if [[ $os == Darwin ]]; then
+  # Sound through the Mac's output device. Output only: a duplex codec would
+  # make macOS ask for the microphone.
+  args+=(-audiodev "coreaudio,id=snd" -device intel-hda -device "hda-output,audiodev=snd")
+  # Clipboard: a virtio port in the guest, a unix socket here, and a helper
+  # that keeps the socket and the macOS pasteboard in step. BAMBO_CLIPBOARD=0 turns it off.
+  if [[ ${BAMBO_CLIPBOARD:-1} == 1 ]] && command -v python3 >/dev/null 2>&1; then
+    clip="${TMPDIR:-/tmp}/bambo-clipboard-$$.sock"
+    args+=(-device virtio-serial-pci
+      -chardev "socket,id=clip,path=$clip,server=on,wait=off"
+      -device "virtserialport,chardev=clip,name=org.bambo.clipboard")
+    python3 "$(dirname "$0")/clipboard-host.py" "$clip" &
   fi
 fi
 

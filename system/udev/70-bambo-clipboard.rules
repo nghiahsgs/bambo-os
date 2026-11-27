@@ -1,0 +1,2 @@
+# The clipboard port that `make try` adds to the VM. The logged-in user may open it.
+SUBSYSTEM=="virtio-ports", ATTR{name}=="org.bambo.clipboard", MODE="0660", TAG+="uaccess"

@@ -30,6 +30,7 @@ Short record of choices made while implementing the PRD ([PRD.md](PRD.md)), with
 - **Scale guard.** Monitor scale is `auto`, which is right for HiDPI laptops. QEMU on macOS reports a tiny physical display, and `auto` then doubled a 720x400 mode into an unusable desktop (found on the first local run). The start hook now falls back to scale 1 when the scaled desktop would be narrower than 1100 px.
 
 - **arm64 is a disk image, not an ISO.** archiso targets x86_64 only. `scripts/build-arm64.sh` runs `pacstrap` from Arch Linux ARM into a raw disk inside an arm64 container and ships it as qcow2, already installed. The idea and the container bootstrap come from [omacom/try-omarchy](https://github.com/omacom/try-omarchy) (MIT). Their patched QEMU, GPU acceleration and Mac integrations are not used: `make try` runs stock Homebrew QEMU with software rendering.
+- **Clipboard and sound in `make try`.** The clipboard is a small bridge of our own: a virtio port, `bambo-clipboard` in the guest (wl-clipboard) and `scripts/clipboard-host.py` on the Mac (pbcopy, pbpaste). spice-vdagent was the standard choice, but it drives the X11 clipboard and QEMU's Cocoa window. Ours works on any display backend and can be tested headless. Sound is an Intel HDA output codec on CoreAudio, because the Arch Linux ARM kernel has no virtio sound driver.
 - **arm64 differences.** Kernel is `linux-aarch64`, boot is systemd-boot at the removable EFI path, no microcode, firmware packages or GRUB (`arm64/packages.exclude`). rofi is 1.7.5 through XWayland there.
 
 ## Before going public

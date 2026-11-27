@@ -13,7 +13,9 @@ SHELL := /bin/bash
 ISO = $(shell ls -t out/bambo-os-*.iso 2>/dev/null | head -n1)
 IS_ARCH := $(shell command -v mkarchiso >/dev/null 2>&1 && echo yes)
 HOST_ARCH := $(shell uname -m)
-SCRIPTS := $(wildcard scripts/bambo-*) $(wildcard scripts/*.sh)
+# Shell scripts only: scripts/ also holds Python (bambo-clipboard, clipboard-host.py).
+SCRIPTS := $(shell grep -lE '^\#!.*\bbash' scripts/bambo-* scripts/*.sh)
+PYTHON_SCRIPTS := scripts/bambo-clipboard scripts/clipboard-host.py
 
 .PHONY: iso iso-test arm64 lint try test-vm smoke wallpaper clean
 
@@ -41,6 +43,7 @@ lint:
 	@for f in $(SCRIPTS); do bash -n "$$f" || exit 1; done; echo "bash -n: ok"
 	@if command -v shellcheck >/dev/null; then shellcheck $(SCRIPTS) iso/profiledef.sh && echo "shellcheck: ok"; \
 	 else docker run --rm -v "$(CURDIR)":/mnt -w /mnt koalaman/shellcheck:stable $(SCRIPTS) iso/profiledef.sh && echo "shellcheck: ok"; fi
+	@python3 -c "import ast,sys; [ast.parse(open(f).read(), f) for f in sys.argv[1:]]; print('python: ok')" $(PYTHON_SCRIPTS)
 	@if command -v luac >/dev/null; then luac -p config/hypr/*.lua && echo "luac: ok"; else echo "luac: skipped (not installed)"; fi
 	@python3 -c "import json,re,sys; s=open('config/waybar/config.jsonc').read(); json.loads(re.sub(r'^\s*//.*$$','',s,flags=re.M)); print('waybar json: ok')"
 	@dups=$$(grep -hv '^\s*#' iso/packages.x86_64 iso/packages.live | sed '/^\s*$$/d' | sort | uniq -d); \

@@ -22,6 +22,7 @@ bambo_assemble_root() {
   for tool in "$repo"/scripts/bambo-*; do
     install -m 755 "$tool" "$bin/"
   done
+  install -D -m 644 -t "$root/etc/udev/rules.d" "$repo"/system/udev/*.rules
   cp "$repo/themes/tessera/wallpaper.png" "$repo/themes/tessera/logo.svg" "$share/tessera/"
   cp "$repo/iso/packages.x86_64" "$share/packages.x86_64"
 }
