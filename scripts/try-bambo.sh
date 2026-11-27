@@ -78,13 +78,15 @@ if [[ $arch == aarch64 ]]; then
   code="$share/edk2-aarch64-code.fd"
   [[ -r $code && -r $share/edk2-arm-vars.fd ]] || { echo "try-bambo: UEFI firmware not found in $share." >&2; exit 1; }
   overlay=out/try-arm64.qcow2 vars=out/try-arm64-vars.fd
-  # The VM disk is an overlay on one image. Compare the image it was made from,
-  # not file times: a running VM keeps the overlay newer than any new image.
-  backing="$(qemu-img info -U "$overlay" 2>/dev/null | sed -n 's/^backing file: //p')"
-  if [[ ! -e $overlay || $backing != "$(realpath "$media")" ]]; then
+  # The VM disk is an overlay on one image and is only valid for that exact
+  # build. The stamp records which one: file times alone do not work, because a
+  # running VM keeps the overlay newer than any image built meanwhile.
+  stamp="$(realpath "$media") $(stat -f %m "$media" 2>/dev/null || stat -c %Y "$media")"
+  if [[ ! -e $overlay || $(cat "$overlay.stamp" 2>/dev/null) != "$stamp" ]]; then
     echo "try-bambo: new VM disk $overlay on top of $media"
     rm -f "$overlay" "$vars"
     qemu-img create -q -f qcow2 -F qcow2 -b "$(realpath "$media")" "$overlay"
+    echo "$stamp" >"$overlay.stamp"
   fi
   [[ -e $vars ]] || cp "$share/edk2-arm-vars.fd" "$vars"
   # The firmware has no virtio keyboard driver, so the keyboard is USB.
