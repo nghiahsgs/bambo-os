@@ -16,6 +16,7 @@ bambo_assemble_root() {
   done
   cp "$repo/config/starship.toml" "$skel/.config/starship.toml"
   cp "$repo/config/chromium-flags.conf" "$skel/.config/chromium-flags.conf"
+  cp "$repo/config/mimeapps.list" "$skel/.config/mimeapps.list"
   cp "$repo/config/zshrc" "$skel/.zshrc"
   cp "$repo/config/zprofile" "$skel/.zprofile"
 

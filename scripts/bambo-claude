@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# bambo-claude: start Claude Code, or say how to get it when it is missing.
+set -euo pipefail
+
+if command -v claude >/dev/null 2>&1; then
+  exec claude "$@"
+fi
+
+echo "Claude Code is not installed. Install it with:"
+echo "  npm install -g --allow-scripts=@anthropic-ai/claude-code @anthropic-ai/claude-code"
+echo
+read -r -n 1 -s -p "Press any key to close."

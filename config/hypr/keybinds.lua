@@ -19,6 +19,7 @@ hl.bind(mod .. " + SHIFT + F",      tui("yazi"))
 hl.bind(mod .. " + SHIFT + N",      tui("nvim"))
 hl.bind(mod .. " + SHIFT + T",      tui("btop"))
 hl.bind(mod .. " + SHIFT + A",      tui("bambo-codex"))
+hl.bind(mod .. " + SHIFT + D",      tui("lazydocker"))
 hl.bind(mod .. " + space",          run("rofi -show drun"))
 -- macOS keeps Cmd + Space when BamboOS runs in a VM, so the launcher has a second chord.
 hl.bind(mod .. " + ALT + space",    run("rofi -show drun"))
@@ -86,6 +87,7 @@ hl.bind(mod .. " + C", clipboard("C"))
 hl.bind(mod .. " + V", clipboard("V"))
 hl.bind(mod .. " + X", send("CTRL", "X"))
 hl.bind(mod .. " + A", send("CTRL", "A"))
+hl.bind(mod .. " + CTRL + V", run("bambo-clip-history"))
 
 -- Capture
 hl.bind(mod .. " + SHIFT + S", run("bambo-shot"))

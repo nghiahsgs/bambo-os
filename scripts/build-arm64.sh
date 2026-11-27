@@ -110,10 +110,15 @@ bambo_assemble_root /src "$target"
 rm -f "$target/usr/local/bin/bambo-smoke" "$target/usr/local/bin/bambo-install"
 
 # Arch Linux ARM has no openai-codex package, so Codex comes from npm here.
+# Claude Code is in no Arch repository, so it comes from npm too. Its native
+# binary arrives in an install script, which npm only runs when allowed by name.
 # A failed download must not fail the image: bambo-codex says how to install it.
-step "Installing Codex from npm"
-arch-chroot "$target" npm install --global --prefix /usr/local --no-fund --no-audit @openai/codex ||
-  echo "warning: Codex was not installed (npm failed)."
+step "Installing Codex and Claude Code from npm"
+for agent in @openai/codex @anthropic-ai/claude-code; do
+  arch-chroot "$target" npm install --global --prefix /usr/local --no-fund --no-audit \
+    --allow-scripts="$agent" "$agent" ||
+    echo "warning: $agent was not installed (npm failed)."
+done
 
 # Same account as the live ISO: "bambo", empty password, sudo without a prompt.
 arch-chroot "$target" userdel -r alarm >/dev/null 2>&1 || true

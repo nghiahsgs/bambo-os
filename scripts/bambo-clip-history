@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# bambo-clip-history: pick an earlier clipboard entry (Super + Ctrl + V).
+set -euo pipefail
+
+pick="$(cliphist list | rofi -dmenu -i -p "clipboard" \
+  -theme-str 'window { width: 720px; } listview { lines: 12; }')" || exit 0
+[[ -n $pick ]] || exit 0
+cliphist decode <<<"$pick" | wl-copy

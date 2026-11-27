@@ -58,6 +58,8 @@ The chords follow Omarchy, so there is nothing to relearn. The full list is on `
 - `Super + Space`: app launcher
 - `Super + Shift + F`: file manager (yazi)
 - `Super + Shift + N`: Neovim, set up as LazyVim (press `Space` inside for its menu)
+- `Super + Shift + D`: Docker (lazydocker)
+- `Super + Ctrl + V`: clipboard history
 - `Super + Shift + A`: Codex agent. In a terminal, `cy` starts it with no approval prompts
 - `Super + W`: close window
 - `Super + F`: fullscreen

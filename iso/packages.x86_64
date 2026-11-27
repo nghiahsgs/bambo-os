@@ -74,6 +74,17 @@ fd
 gcc
 tree-sitter-cli
 lazygit
+# everyday helpers
+github-cli
+lazydocker
+bat
+eza
+zoxide
+cliphist
+yt-dlp
+imv
+zathura
+zathura-pdf-mupdf
 gum
 
 # --- agent-ready runtimes

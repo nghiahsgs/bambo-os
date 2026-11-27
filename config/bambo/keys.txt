@@ -6,6 +6,7 @@ Super + Shift + F         File manager (yazi)
 Super + Shift + N         Editor (Neovim with LazyVim, Space shows its keys)
 Super + Shift + A         Codex agent
 Super + Shift + T         Activity (btop)
+Super + Shift + D         Docker (lazydocker)
 Super + W                 Close window (also Super + Q)
 Super + F                 Fullscreen
 Super + Alt + F           Maximize
@@ -20,6 +21,7 @@ Super + Shift + 1..0      Move window to workspace
 Super + Tab               Next workspace (with Shift: previous)
 Super + S                 Scratchpad (Super + Alt + S sends a window there)
 Super + C / V / X / A     Copy / paste / cut / select all
+Super + Ctrl + V          Clipboard history
 Super + Shift + S         Screenshot a region (saved to ~/Pictures, copied)
 Print                     Screenshot the whole screen
 Super + Shift + R         Start / stop screen recording (saved to ~/Videos)

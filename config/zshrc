@@ -13,8 +13,14 @@ export EDITOR=nvim
 export NPM_CONFIG_PREFIX="$HOME/.local"
 export PATH="$HOME/.local/bin:$PATH"
 
-alias ll='ls -lah --color=auto'
-alias ls='ls --color=auto'
+if (( $+commands[eza] )); then
+  alias ls='eza --group-directories-first'
+  alias ll='eza -lah --git --group-directories-first'
+  alias tree='eza --tree'
+else
+  alias ls='ls --color=auto'
+  alias ll='ls -lah --color=auto'
+fi
 alias gs='git status'
 alias ..='cd ..'
 alias ...='cd ../..'
@@ -24,10 +30,14 @@ alias bambofetch='bambo-fetch'
 # cy: Codex with no approval prompts and no sandbox. It can run any command, so use it in a VM or a throwaway checkout.
 alias cy='bambo-codex --dangerously-bypass-approvals-and-sandbox'
 alias cx='bambo-codex'
+# cl: Claude Code. cly: the same with permission prompts off, for VMs only.
+alias cl='bambo-claude'
+alias cly='bambo-claude --dangerously-skip-permissions'
 
 [[ -r /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh ]] &&
   source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
 (( $+commands[fzf] )) && source <(fzf --zsh)
+(( $+commands[zoxide] )) && eval "$(zoxide init zsh)"   # z <part of a folder name>
 (( $+commands[starship] )) && eval "$(starship init zsh)"
 # Must be sourced last.
 [[ -r /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]] &&
